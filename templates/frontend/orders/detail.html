@@ -3,7 +3,7 @@
 {% block title %}订单详情{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
     <!-- 面包屑 -->
     <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
         <a href="{% url 'frontend:order_list' %}" class="hover:text-primary-600 transition-colors">我的订单</a>
@@ -134,12 +134,12 @@
         <form method="post" action="{% url 'frontend:order_cancel' pk=order.pk %}">
             {% csrf_token %}
             <button type="submit" onclick="return confirm('确定要取消订单吗？')"
-                class="px-6 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors">
+                class="px-6 md:px-8 py-3 md:py-4 border border-gray-200 text-gray-600 font-medium text-base md:text-lg rounded-xl hover:bg-gray-50 transition-colors">
                 取消订单
             </button>
         </form>
         <a href="{% url 'frontend:order_payment' pk=order.pk %}" 
-            class="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/30">
+            class="px-8 md:px-10 py-3 md:py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-base md:text-lg rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/30">
             去支付
         </a>
     </div>

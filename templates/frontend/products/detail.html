@@ -3,7 +3,7 @@
 {% block title %}{{ product.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
     <!-- 面包屑 -->
     <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
         <a href="{% url 'frontend:product_list' %}" class="hover:text-primary-600 transition-colors">商品</a>
@@ -33,18 +33,6 @@
                 </div>
                 {% endif %}
                 
-                <!-- 库存标签 -->
-                {% if product.stock %}
-                    {% if product.stock.available_quantity <= 0 %}
-                    <div class="absolute top-4 left-4 px-4 py-2 bg-gray-800/90 text-white text-sm font-medium rounded-full">
-                        暂时缺货
-                    </div>
-                    {% elif product.stock.available_quantity <= 10 %}
-                    <div class="absolute top-4 left-4 px-4 py-2 bg-orange-500/90 text-white text-sm font-medium rounded-full">
-                        仅剩 {{ product.stock.available_quantity }} 件
-                    </div>
-                    {% endif %}
-                {% endif %}
             </div>
             
             <!-- 商品信息 -->
@@ -62,18 +50,6 @@
                         <span class="text-3xl font-bold text-primary-600">¥{{ product.selling_price }}</span>
                     </div>
                     
-                    <!-- 库存信息 -->
-                    <div class="flex items-center space-x-2 text-sm mb-6">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        {% if product.stock %}
-                        <span class="text-gray-600">库存: {{ product.stock.available_quantity }} 件</span>
-                        {% else %}
-                        <span class="text-gray-400">暂无库存信息</span>
-                        {% endif %}
-                    </div>
-                    
                     <!-- 商品描述 -->
                     {% if product.description %}
                     <div class="border-t border-gray-100 pt-6">
@@ -87,21 +63,20 @@
                 
                 <!-- 购买操作 -->
                 <div class="border-t border-gray-100 pt-6 mt-6">
-                    {% if product.stock and product.stock.available_quantity > 0 %}
                     <div class="flex items-center space-x-4 mb-6">
-                        <span class="text-gray-600 font-medium">数量</span>
+                        <span class="text-gray-600 font-medium text-base md:text-lg">数量</span>
                         <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
                             <button type="button" onclick="changeQuantity(-1)" 
-                                class="px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="px-4 md:px-6 py-3 md:py-4 text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                                 </svg>
                             </button>
-                            <input type="number" id="quantity" value="1" min="1" max="{{ product.stock.available_quantity }}"
-                                class="w-16 text-center border-x border-gray-200 py-2 focus:outline-none">
+                            <input type="number" id="quantity" value="1" min="1"
+                                class="w-16 md:w-20 text-center text-lg md:text-xl border-x border-gray-200 py-3 md:py-4 focus:outline-none">
                             <button type="button" onclick="changeQuantity(1)"
-                                class="px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="px-4 md:px-6 py-3 md:py-4 text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                 </svg>
                             </button>
@@ -109,17 +84,12 @@
                     </div>
                     
                     <button onclick="addToCartWithQuantity()" 
-                        class="w-full py-4 px-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30 flex items-center justify-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="w-full py-4 md:py-5 px-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-lg md:text-xl rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30 flex items-center justify-center space-x-2">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                         </svg>
                         <span>加入购物车</span>
                     </button>
-                    {% else %}
-                    <button disabled class="w-full py-4 px-6 bg-gray-200 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
-                        暂时缺货
-                    </button>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -129,13 +99,10 @@
 
 {% block extra_js %}
 <script>
-const maxStock = {{ product.stock.available_quantity|default:0 }};
-
 function changeQuantity(delta) {
     const input = document.getElementById('quantity');
     let value = parseInt(input.value) + delta;
     if (value < 1) value = 1;
-    if (value > maxStock) value = maxStock;
     input.value = value;
 }
 

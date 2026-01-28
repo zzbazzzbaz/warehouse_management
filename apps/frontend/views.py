@@ -117,11 +117,6 @@ def cart_add(request):
     
     product = get_object_or_404(Product, pk=product_id, is_active=True)
     
-    # 检查库存
-    stock = getattr(product, 'stock', None)
-    if not stock or stock.available_quantity < quantity:
-        return JsonResponse({'success': False, 'message': '库存不足'})
-    
     # 获取或创建购物车
     cart, _ = Cart.objects.get_or_create(user=request.user)
     
@@ -133,10 +128,7 @@ def cart_add(request):
     )
     
     if not created:
-        new_quantity = cart_item.quantity + quantity
-        if stock.available_quantity < new_quantity:
-            return JsonResponse({'success': False, 'message': '库存不足'})
-        cart_item.quantity = new_quantity
+        cart_item.quantity += quantity
         cart_item.save()
     
     return JsonResponse({
@@ -176,11 +168,6 @@ def cart_update(request):
     if quantity <= 0:
         item.delete()
         return JsonResponse({'success': True, 'message': '已删除', 'deleted': True})
-    
-    # 检查库存
-    stock = getattr(item.product, 'stock', None)
-    if not stock or stock.available_quantity < quantity:
-        return JsonResponse({'success': False, 'message': '库存不足'})
     
     item.quantity = quantity
     item.save()

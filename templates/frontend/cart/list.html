@@ -3,8 +3,8 @@
 {% block title %}购物车{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-8">购物车</h1>
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+    <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">购物车</h1>
     
     {% if items %}
     <form method="post" action="{% url 'frontend:order_create' %}" id="checkout-form">
@@ -23,14 +23,14 @@
             <!-- 购物车项目 -->
             <div class="divide-y divide-gray-100">
                 {% for item in items %}
-                <div class="p-6 flex items-center space-x-4" id="cart-item-{{ item.id }}">
+                <div class="p-4 md:p-6 flex items-center space-x-3 md:space-x-4" id="cart-item-{{ item.id }}">
                     <!-- 选择框 -->
                     <input type="checkbox" name="item_ids" value="{{ item.id }}" onchange="updateSelectAll()"
-                        class="item-checkbox w-5 h-5 text-primary-500 border-gray-300 rounded focus:ring-primary-500">
+                        class="item-checkbox w-6 h-6 md:w-7 md:h-7 text-primary-500 border-gray-300 rounded focus:ring-primary-500">
                     
                     <!-- 商品图片 -->
                     <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" class="flex-shrink-0">
-                        <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+                        <div class="w-16 h-16 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100">
                             {% if item.product.image %}
                             <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
                             {% else %}
@@ -46,44 +46,40 @@
                     <!-- 商品信息 -->
                     <div class="flex-1 min-w-0">
                         <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" 
-                            class="font-medium text-gray-800 hover:text-primary-600 transition-colors line-clamp-2">
+                            class="font-medium text-gray-800 hover:text-primary-600 transition-colors line-clamp-2 text-sm md:text-base">
                             {{ item.product.name }}
                         </a>
-                        <p class="text-primary-600 font-semibold mt-1">¥{{ item.product.selling_price }}</p>
-                        {% if item.product.stock %}
-                        <p class="text-xs text-gray-400 mt-1">库存: {{ item.product.stock.available_quantity }}</p>
-                        {% endif %}
+                        <p class="text-primary-600 font-semibold mt-1 text-base md:text-lg">¥{{ item.product.selling_price }}</p>
                     </div>
                     
                     <!-- 数量控制 -->
                     <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
                         <button type="button" onclick="updateQuantity({{ item.id }}, -1)"
-                            class="px-3 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="px-3 md:px-4 py-2 md:py-3 text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
                             </svg>
                         </button>
                         <input type="number" id="qty-{{ item.id }}" value="{{ item.quantity }}" min="1" 
-                            max="{{ item.product.stock.available_quantity|default:999 }}"
                             onchange="setQuantity({{ item.id }})"
-                            class="w-12 text-center border-x border-gray-200 py-2 focus:outline-none text-sm">
+                            class="w-12 md:w-16 text-center border-x border-gray-200 py-2 md:py-3 focus:outline-none text-base md:text-lg">
                         <button type="button" onclick="updateQuantity({{ item.id }}, 1)"
-                            class="px-3 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="px-3 md:px-4 py-2 md:py-3 text-gray-600 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                             </svg>
                         </button>
                     </div>
                     
                     <!-- 小计 -->
-                    <div class="text-right w-24">
-                        <p class="text-lg font-bold text-gray-800" id="subtotal-{{ item.id }}">¥{{ item.subtotal }}</p>
+                    <div class="text-right w-20 md:w-28">
+                        <p class="text-base md:text-xl font-bold text-gray-800" id="subtotal-{{ item.id }}">¥{{ item.subtotal }}</p>
                     </div>
                     
                     <!-- 删除 -->
                     <button type="button" onclick="removeItem({{ item.id }})"
-                        class="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="p-2 md:p-3 text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                         </svg>
                     </button>
@@ -93,15 +89,15 @@
         </div>
         
         <!-- 结算栏 -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 sticky bottom-4">
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 sticky bottom-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-600">已选 <span id="selected-count" class="font-bold text-primary-600">0</span> 件</span>
+                <div class="flex items-center space-x-3 md:space-x-4">
+                    <span class="text-gray-600 text-sm md:text-base">已选 <span id="selected-count" class="font-bold text-primary-600">0</span> 件</span>
                     <span class="text-gray-400">|</span>
-                    <span class="text-gray-600">合计: <span id="selected-total" class="text-xl font-bold text-primary-600">¥0.00</span></span>
+                    <span class="text-gray-600 text-sm md:text-base">合计: <span id="selected-total" class="text-lg md:text-2xl font-bold text-primary-600">¥0.00</span></span>
                 </div>
                 <button type="submit" id="checkout-btn" disabled
-                    class="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+                    class="px-6 md:px-10 py-3 md:py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold text-base md:text-lg rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
                     去结算
                 </button>
             </div>

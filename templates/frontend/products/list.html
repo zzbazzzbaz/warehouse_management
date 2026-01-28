@@ -3,26 +3,26 @@
 {% block title %}商品列表{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
     <!-- 搜索和筛选 -->
-    <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6 md:mb-8">
         <form method="get" class="flex flex-col md:flex-row gap-4">
             <!-- 搜索框 -->
             <div class="flex-1 relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 md:w-6 md:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </div>
                 <input type="text" name="search" value="{{ search }}" 
-                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    class="w-full pl-12 pr-4 py-3 md:py-4 text-base md:text-lg border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="搜索商品...">
             </div>
             
             <!-- 分类筛选 -->
-            <div class="w-full md:w-64">
+            <div class="w-full md:w-72">
                 <select name="category" onchange="this.form.submit()"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none bg-white">
+                    class="w-full px-4 py-3 md:py-4 text-base md:text-lg border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none bg-white">
                     <option value="">全部分类</option>
                     {% for category in categories %}
                     <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
@@ -37,7 +37,7 @@
                 </select>
             </div>
             
-            <button type="submit" class="px-6 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors">
+            <button type="submit" class="px-6 md:px-8 py-3 md:py-4 bg-primary-500 text-white font-medium text-base md:text-lg rounded-xl hover:bg-primary-600 transition-colors">
                 搜索
             </button>
         </form>
@@ -45,7 +45,7 @@
     
     <!-- 商品网格 -->
     {% if products %}
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {% for product in products %}
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300">
             <!-- 商品图片 -->
@@ -61,51 +61,31 @@
                 </div>
                 {% endif %}
                 
-                <!-- 库存标签 -->
-                {% if product.stock %}
-                    {% if product.stock.available_quantity <= 0 %}
-                    <div class="absolute top-3 right-3 px-3 py-1 bg-gray-800/80 text-white text-xs font-medium rounded-full">
-                        缺货
-                    </div>
-                    {% elif product.stock.available_quantity <= 10 %}
-                    <div class="absolute top-3 right-3 px-3 py-1 bg-orange-500/90 text-white text-xs font-medium rounded-full">
-                        仅剩{{ product.stock.available_quantity }}件
-                    </div>
-                    {% endif %}
-                {% endif %}
             </a>
             
             <!-- 商品信息 -->
-            <div class="p-4">
+            <div class="p-3 md:p-4">
                 <a href="{% url 'frontend:product_detail' pk=product.pk %}" class="block">
-                    <h3 class="font-medium text-gray-800 line-clamp-2 hover:text-primary-600 transition-colors">
+                    <h3 class="font-medium text-gray-800 line-clamp-2 hover:text-primary-600 transition-colors text-sm md:text-base">
                         {{ product.name }}
                     </h3>
                 </a>
                 
                 {% if product.category %}
-                <p class="text-sm text-gray-400 mt-1">{{ product.category.name }}</p>
+                <p class="text-xs md:text-sm text-gray-400 mt-1">{{ product.category.name }}</p>
                 {% endif %}
                 
-                <div class="flex items-center justify-between mt-3">
+                <div class="flex items-center justify-between mt-2 md:mt-3">
                     <div class="flex items-baseline space-x-1">
-                        <span class="text-lg font-bold text-primary-600">¥{{ product.selling_price }}</span>
+                        <span class="text-base md:text-xl font-bold text-primary-600">¥{{ product.selling_price }}</span>
                     </div>
                     
-                    {% if product.stock and product.stock.available_quantity > 0 %}
                     <button onclick="addToCart({{ product.pk }})" 
-                        class="p-2 bg-primary-50 text-primary-600 rounded-xl hover:bg-primary-100 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="p-2 md:p-3 bg-primary-50 text-primary-600 rounded-xl hover:bg-primary-100 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                     </button>
-                    {% else %}
-                    <button disabled class="p-2 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                    {% endif %}
                 </div>
             </div>
         </div>
