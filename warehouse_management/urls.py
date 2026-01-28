@@ -27,6 +27,7 @@ admin.site.index_title = '欢迎使用仓库管理系统'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('', include('apps.frontend.urls')),
 ]
 
 # 开发环境下服务媒体文件

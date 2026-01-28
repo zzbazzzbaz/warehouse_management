@@ -53,7 +53,12 @@ INSTALLED_APPS = [
     'apps.orders',
     'apps.cart',
     'apps.reports',
+    'apps.frontend',
 ]
+
+# 登录配置
+LOGIN_URL = 'frontend:login'
+LOGIN_REDIRECT_URL = 'frontend:product_list'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

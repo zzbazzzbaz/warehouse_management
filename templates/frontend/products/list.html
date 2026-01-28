@@ -1,0 +1,154 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}商品列表{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- 搜索和筛选 -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <form method="get" class="flex flex-col md:flex-row gap-4">
+            <!-- 搜索框 -->
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <input type="text" name="search" value="{{ search }}" 
+                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    placeholder="搜索商品...">
+            </div>
+            
+            <!-- 分类筛选 -->
+            <div class="w-full md:w-64">
+                <select name="category" onchange="this.form.submit()"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none bg-white">
+                    <option value="">全部分类</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% for child in category.children.all %}
+                    <option value="{{ child.id }}" {% if current_category == child.id|stringformat:"s" %}selected{% endif %}>
+                        &nbsp;&nbsp;└ {{ child.name }}
+                    </option>
+                    {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit" class="px-6 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors">
+                搜索
+            </button>
+        </form>
+    </div>
+    
+    <!-- 商品网格 -->
+    {% if products %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for product in products %}
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <!-- 商品图片 -->
+            <a href="{% url 'frontend:product_detail' pk=product.pk %}" class="block relative aspect-square overflow-hidden bg-gray-100">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                
+                <!-- 库存标签 -->
+                {% if product.stock %}
+                    {% if product.stock.available_quantity <= 0 %}
+                    <div class="absolute top-3 right-3 px-3 py-1 bg-gray-800/80 text-white text-xs font-medium rounded-full">
+                        缺货
+                    </div>
+                    {% elif product.stock.available_quantity <= 10 %}
+                    <div class="absolute top-3 right-3 px-3 py-1 bg-orange-500/90 text-white text-xs font-medium rounded-full">
+                        仅剩{{ product.stock.available_quantity }}件
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </a>
+            
+            <!-- 商品信息 -->
+            <div class="p-4">
+                <a href="{% url 'frontend:product_detail' pk=product.pk %}" class="block">
+                    <h3 class="font-medium text-gray-800 line-clamp-2 hover:text-primary-600 transition-colors">
+                        {{ product.name }}
+                    </h3>
+                </a>
+                
+                {% if product.category %}
+                <p class="text-sm text-gray-400 mt-1">{{ product.category.name }}</p>
+                {% endif %}
+                
+                <div class="flex items-center justify-between mt-3">
+                    <div class="flex items-baseline space-x-1">
+                        <span class="text-lg font-bold text-primary-600">¥{{ product.selling_price }}</span>
+                    </div>
+                    
+                    {% if product.stock and product.stock.available_quantity > 0 %}
+                    <button onclick="addToCart({{ product.pk }})" 
+                        class="p-2 bg-primary-50 text-primary-600 rounded-xl hover:bg-primary-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </button>
+                    {% else %}
+                    <button disabled class="p-2 bg-gray-100 text-gray-400 rounded-xl cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- 空状态 -->
+    <div class="text-center py-16">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-800 mb-2">暂无商品</h3>
+        <p class="text-gray-500">请尝试其他搜索条件</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addToCart(productId) {
+    fetch('{% url "frontend:cart_add" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `product_id=${productId}&quantity=1`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            updateCartBadge(data.cart_count);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('操作失败', 'error');
+    });
+}
+</script>
+{% endblock %}

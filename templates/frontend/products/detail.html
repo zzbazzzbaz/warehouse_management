@@ -1,0 +1,167 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <!-- 面包屑 -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
+        <a href="{% url 'frontend:product_list' %}" class="hover:text-primary-600 transition-colors">商品</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        {% if product.category %}
+        <a href="{% url 'frontend:product_list' %}?category={{ product.category.id }}" class="hover:text-primary-600 transition-colors">{{ product.category.name }}</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        {% endif %}
+        <span class="text-gray-800">{{ product.name|truncatechars:30 }}</span>
+    </nav>
+    
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="grid md:grid-cols-2 gap-8 p-6 md:p-8">
+            <!-- 商品图片 -->
+            <div class="relative aspect-square rounded-xl overflow-hidden bg-gray-100">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <svg class="w-32 h-32 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                
+                <!-- 库存标签 -->
+                {% if product.stock %}
+                    {% if product.stock.available_quantity <= 0 %}
+                    <div class="absolute top-4 left-4 px-4 py-2 bg-gray-800/90 text-white text-sm font-medium rounded-full">
+                        暂时缺货
+                    </div>
+                    {% elif product.stock.available_quantity <= 10 %}
+                    <div class="absolute top-4 left-4 px-4 py-2 bg-orange-500/90 text-white text-sm font-medium rounded-full">
+                        仅剩 {{ product.stock.available_quantity }} 件
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <!-- 商品信息 -->
+            <div class="flex flex-col">
+                <div class="flex-1">
+                    {% if product.category %}
+                    <span class="inline-block px-3 py-1 bg-primary-50 text-primary-600 text-sm font-medium rounded-full mb-4">
+                        {{ product.category.name }}
+                    </span>
+                    {% endif %}
+                    
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4">{{ product.name }}</h1>
+                    
+                    <div class="flex items-baseline space-x-3 mb-6">
+                        <span class="text-3xl font-bold text-primary-600">¥{{ product.selling_price }}</span>
+                    </div>
+                    
+                    <!-- 库存信息 -->
+                    <div class="flex items-center space-x-2 text-sm mb-6">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        {% if product.stock %}
+                        <span class="text-gray-600">库存: {{ product.stock.available_quantity }} 件</span>
+                        {% else %}
+                        <span class="text-gray-400">暂无库存信息</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 商品描述 -->
+                    {% if product.description %}
+                    <div class="border-t border-gray-100 pt-6">
+                        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">商品描述</h3>
+                        <div class="prose prose-sm max-w-none text-gray-600">
+                            {{ product.description|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- 购买操作 -->
+                <div class="border-t border-gray-100 pt-6 mt-6">
+                    {% if product.stock and product.stock.available_quantity > 0 %}
+                    <div class="flex items-center space-x-4 mb-6">
+                        <span class="text-gray-600 font-medium">数量</span>
+                        <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                            <button type="button" onclick="changeQuantity(-1)" 
+                                class="px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                                </svg>
+                            </button>
+                            <input type="number" id="quantity" value="1" min="1" max="{{ product.stock.available_quantity }}"
+                                class="w-16 text-center border-x border-gray-200 py-2 focus:outline-none">
+                            <button type="button" onclick="changeQuantity(1)"
+                                class="px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button onclick="addToCartWithQuantity()" 
+                        class="w-full py-4 px-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30 flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span>加入购物车</span>
+                    </button>
+                    {% else %}
+                    <button disabled class="w-full py-4 px-6 bg-gray-200 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
+                        暂时缺货
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const maxStock = {{ product.stock.available_quantity|default:0 }};
+
+function changeQuantity(delta) {
+    const input = document.getElementById('quantity');
+    let value = parseInt(input.value) + delta;
+    if (value < 1) value = 1;
+    if (value > maxStock) value = maxStock;
+    input.value = value;
+}
+
+function addToCartWithQuantity() {
+    const quantity = document.getElementById('quantity').value;
+    
+    fetch('{% url "frontend:cart_add" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `product_id={{ product.pk }}&quantity=${quantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 跳转到购物车页面
+            window.location.href = '{% url "frontend:cart_list" %}';
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showToast('操作失败', 'error');
+    });
+}
+</script>
+{% endblock %}

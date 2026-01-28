@@ -1,0 +1,174 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}支付订单{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <!-- 面包屑 -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
+        <a href="{% url 'frontend:order_list' %}" class="hover:text-primary-600 transition-colors">我的订单</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-gray-800">支付订单</span>
+    </nav>
+    
+    <!-- 订单金额 -->
+    <div class="bg-white rounded-2xl shadow-sm p-8 text-center mb-6">
+        <p class="text-gray-500 mb-2">订单金额</p>
+        <p class="text-4xl font-bold text-primary-600 mb-2">¥{{ order.total_amount }}</p>
+        <p class="text-sm text-gray-400">订单号: {{ order.order_no }}</p>
+    </div>
+    
+    <!-- 支付方式选择 -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800">选择支付方式</h2>
+        </div>
+        
+        <div class="p-6 space-y-4">
+            <!-- 线下支付 -->
+            <label class="payment-option flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition-colors" data-method="offline">
+                <input type="radio" name="payment_method" value="offline" class="hidden" checked>
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-medium text-gray-800">线下支付</h3>
+                    <p class="text-sm text-gray-500">现金、银行卡等线下方式</p>
+                </div>
+                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center check-indicator">
+                    <div class="w-3 h-3 bg-primary-500 rounded-full hidden"></div>
+                </div>
+            </label>
+            
+            <!-- 线上支付 -->
+            <label class="payment-option flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary-300 transition-colors" data-method="online">
+                <input type="radio" name="payment_method" value="online" class="hidden">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-medium text-gray-800">线上支付</h3>
+                    <p class="text-sm text-gray-500">扫码支付（微信/支付宝）</p>
+                </div>
+                <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center check-indicator">
+                    <div class="w-3 h-3 bg-primary-500 rounded-full hidden"></div>
+                </div>
+            </label>
+        </div>
+    </div>
+    
+    <!-- 线上支付二维码 -->
+    <div id="qrcode-section" class="bg-white rounded-2xl shadow-sm p-6 mb-6 hidden">
+        <h3 class="font-semibold text-gray-800 text-center mb-6">请扫码支付</h3>
+        
+        {% if payment_configs %}
+        <div class="grid grid-cols-1 gap-6">
+            {% for config in payment_configs %}
+            <div class="text-center">
+                <div class="inline-block p-4 bg-gray-50 rounded-2xl mb-3">
+                    {% if config.qr_code %}
+                    <img src="{{ config.qr_code.url }}" alt="{{ config.name }}" class="w-48 h-48 object-contain">
+                    {% else %}
+                    <div class="w-48 h-48 flex items-center justify-center bg-gray-200 rounded-lg">
+                        <span class="text-gray-400">暂无二维码</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="font-medium text-gray-800">{{ config.name }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <p class="text-gray-500">暂无可用的支付二维码</p>
+            <p class="text-sm text-gray-400 mt-2">请联系管理员配置</p>
+        </div>
+        {% endif %}
+        
+        <div class="mt-6 p-4 bg-yellow-50 rounded-xl">
+            <p class="text-sm text-yellow-700 text-center">
+                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                支付完成后请点击下方"确认已支付"按钮
+            </p>
+        </div>
+    </div>
+    
+    <!-- 确认支付 -->
+    <form method="post" action="{% url 'frontend:order_confirm_payment' pk=order.pk %}" id="payment-form">
+        {% csrf_token %}
+        <input type="hidden" name="payment_method" id="selected-method" value="offline">
+        
+        <button type="submit" 
+            class="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 focus:ring-4 focus:ring-primary-500/30 transition-all duration-200 shadow-lg shadow-primary-500/30">
+            <span id="btn-text">确认已收款</span>
+        </button>
+    </form>
+    
+    <p class="text-center text-sm text-gray-400 mt-4">
+        确认后订单将标记为已支付
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const options = document.querySelectorAll('.payment-option');
+    const qrcodeSection = document.getElementById('qrcode-section');
+    const selectedMethod = document.getElementById('selected-method');
+    const btnText = document.getElementById('btn-text');
+    
+    function updateSelection() {
+        options.forEach(opt => {
+            const radio = opt.querySelector('input[type="radio"]');
+            const indicator = opt.querySelector('.check-indicator');
+            const dot = indicator.querySelector('div');
+            
+            if (radio.checked) {
+                opt.classList.remove('border-gray-200');
+                opt.classList.add('border-primary-500', 'bg-primary-50/30');
+                indicator.classList.remove('border-gray-300');
+                indicator.classList.add('border-primary-500');
+                dot.classList.remove('hidden');
+            } else {
+                opt.classList.add('border-gray-200');
+                opt.classList.remove('border-primary-500', 'bg-primary-50/30');
+                indicator.classList.add('border-gray-300');
+                indicator.classList.remove('border-primary-500');
+                dot.classList.add('hidden');
+            }
+        });
+        
+        const method = document.querySelector('input[name="payment_method"]:checked').value;
+        selectedMethod.value = method;
+        
+        if (method === 'online') {
+            qrcodeSection.classList.remove('hidden');
+            btnText.textContent = '确认已支付';
+        } else {
+            qrcodeSection.classList.add('hidden');
+            btnText.textContent = '确认已收款';
+        }
+    }
+    
+    options.forEach(opt => {
+        opt.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            updateSelection();
+        });
+    });
+    
+    // 初始化
+    updateSelection();
+});
+</script>
+{% endblock %}

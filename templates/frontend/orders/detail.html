@@ -1,0 +1,148 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}订单详情{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <!-- 面包屑 -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
+        <a href="{% url 'frontend:order_list' %}" class="hover:text-primary-600 transition-colors">我的订单</a>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="text-gray-800">订单详情</span>
+    </nav>
+    
+    <!-- 订单状态 -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 mb-2">
+                    {% if order.status == 'pending' %}待支付
+                    {% elif order.status == 'paid' %}已支付
+                    {% elif order.status == 'completed' %}已完成
+                    {% else %}已取消{% endif %}
+                </h1>
+                <p class="text-gray-500 text-sm">订单号: {{ order.order_no }}</p>
+            </div>
+            <div class="w-16 h-16 rounded-full flex items-center justify-center
+                {% if order.status == 'pending' %}bg-yellow-100
+                {% elif order.status == 'paid' %}bg-green-100
+                {% elif order.status == 'completed' %}bg-blue-100
+                {% else %}bg-gray-100{% endif %}">
+                {% if order.status == 'pending' %}
+                <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {% elif order.status == 'paid' %}
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {% elif order.status == 'completed' %}
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {% else %}
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 订单商品 -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="font-semibold text-gray-800">商品信息</h2>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% for item in order.items.all %}
+            <div class="p-6 flex items-center space-x-4">
+                <!-- 商品图片 -->
+                <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" class="flex-shrink-0">
+                    <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover hover:scale-105 transition-transform">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                
+                <!-- 商品信息 -->
+                <div class="flex-1 min-w-0">
+                    <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" class="font-medium text-gray-800 hover:text-primary-600 transition-colors">
+                        {{ item.product.name }}
+                    </a>
+                    <p class="text-sm text-gray-500 mt-1">¥{{ item.unit_price }} × {{ item.quantity }}</p>
+                </div>
+                
+                <!-- 小计 -->
+                <div class="text-right">
+                    <p class="font-semibold text-gray-800">¥{{ item.subtotal }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- 订单信息 -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <h2 class="font-semibold text-gray-800 mb-4">订单信息</h2>
+        <dl class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <dt class="text-gray-500">创建时间</dt>
+                <dd class="text-gray-800">{{ order.created_at|date:"Y-m-d H:i:s" }}</dd>
+            </div>
+            {% if order.paid_at %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">支付时间</dt>
+                <dd class="text-gray-800">{{ order.paid_at|date:"Y-m-d H:i:s" }}</dd>
+            </div>
+            {% endif %}
+            {% if order.payment_method %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">支付方式</dt>
+                <dd class="text-gray-800">{{ order.get_payment_method_display }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+    
+    <!-- 金额汇总 -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-500">商品金额</span>
+                <span class="text-gray-800">¥{{ order.total_amount }}</span>
+            </div>
+            <div class="border-t border-gray-100 pt-3 flex justify-between">
+                <span class="font-semibold text-gray-800">实付金额</span>
+                <span class="text-xl font-bold text-primary-600">¥{{ order.total_amount }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 操作按钮 -->
+    {% if order.status == 'pending' %}
+    <div class="flex justify-end space-x-4">
+        <form method="post" action="{% url 'frontend:order_cancel' pk=order.pk %}">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('确定要取消订单吗？')"
+                class="px-6 py-3 border border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors">
+                取消订单
+            </button>
+        </form>
+        <a href="{% url 'frontend:order_payment' pk=order.pk %}" 
+            class="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all shadow-lg shadow-primary-500/30">
+            去支付
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
