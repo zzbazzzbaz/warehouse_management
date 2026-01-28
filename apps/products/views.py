@@ -7,7 +7,7 @@ from .models import Product, Category
 
 # ==================== 前台视图 ====================
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def product_list(request):
     """商品列表"""
     products = Product.objects.filter(
@@ -48,7 +48,7 @@ def product_list(request):
     return render(request, 'frontend/products/list.html', context)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def product_detail(request, pk):
     """商品详情"""
     product = get_object_or_404(

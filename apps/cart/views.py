@@ -9,7 +9,7 @@ from apps.products.models import Product
 
 # ==================== 前台视图 ====================
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def cart_add(request):
     """加入购物车"""
@@ -39,7 +39,7 @@ def cart_add(request):
     })
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def cart_list(request):
     """购物车列表"""
     cart = None
@@ -57,7 +57,7 @@ def cart_list(request):
     return render(request, 'frontend/cart/list.html', context)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def cart_update(request):
     """更新购物车数量"""
@@ -82,7 +82,7 @@ def cart_update(request):
     })
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def cart_remove(request):
     """从购物车删除"""

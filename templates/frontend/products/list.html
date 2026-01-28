@@ -49,7 +49,7 @@
         {% for product in products %}
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden group hover:shadow-lg transition-all duration-300">
             <!-- 商品图片 -->
-            <a href="{% url 'frontend:product_detail' pk=product.pk %}" class="block relative aspect-square overflow-hidden bg-gray-100">
+            <a href="{% url 'product_detail' pk=product.pk %}" class="block relative aspect-square overflow-hidden bg-gray-100">
                 {% if product.image %}
                 <img src="{{ product.image.url }}" alt="{{ product.name }}" 
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -65,7 +65,7 @@
             
             <!-- 商品信息 -->
             <div class="p-3 md:p-4">
-                <a href="{% url 'frontend:product_detail' pk=product.pk %}" class="block">
+                <a href="{% url 'product_detail' pk=product.pk %}" class="block">
                     <h3 class="font-medium text-gray-800 line-clamp-2 hover:text-primary-600 transition-colors text-sm md:text-base">
                         {{ product.name }}
                     </h3>
@@ -109,7 +109,7 @@
 {% block extra_js %}
 <script>
 function addToCart(productId) {
-    fetch('{% url "frontend:cart_add" %}', {
+    fetch('{% url "cart_add" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

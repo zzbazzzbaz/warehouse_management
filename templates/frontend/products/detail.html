@@ -6,12 +6,12 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
     <!-- 面包屑 -->
     <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-8">
-        <a href="{% url 'frontend:product_list' %}" class="hover:text-primary-600 transition-colors">商品</a>
+        <a href="{% url 'product_list' %}" class="hover:text-primary-600 transition-colors">商品</a>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
         {% if product.category %}
-        <a href="{% url 'frontend:product_list' %}?category={{ product.category.id }}" class="hover:text-primary-600 transition-colors">{{ product.category.name }}</a>
+        <a href="{% url 'product_list' %}?category={{ product.category.id }}" class="hover:text-primary-600 transition-colors">{{ product.category.name }}</a>
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
         </svg>
@@ -109,7 +109,7 @@ function changeQuantity(delta) {
 function addToCartWithQuantity() {
     const quantity = document.getElementById('quantity').value;
     
-    fetch('{% url "frontend:cart_add" %}', {
+    fetch('{% url "cart_add" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -121,7 +121,7 @@ function addToCartWithQuantity() {
     .then(data => {
         if (data.success) {
             // 跳转到购物车页面
-            window.location.href = '{% url "frontend:cart_list" %}';
+            window.location.href = '{% url "cart_list" %}';
         } else {
             showToast(data.message, 'error');
         }

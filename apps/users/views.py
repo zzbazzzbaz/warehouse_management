@@ -8,7 +8,7 @@ from django.contrib import messages
 def login_view(request):
     """用户登录"""
     if request.user.is_authenticated:
-        return redirect('frontend:product_list')
+        return redirect('product_list')
     
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -17,7 +17,7 @@ def login_view(request):
         
         if user is not None:
             login(request, user)
-            next_url = request.GET.get('next', 'frontend:product_list')
+            next_url = request.GET.get('next', 'product_list')
             return redirect(next_url)
         else:
             messages.error(request, '用户名或密码错误')
@@ -28,4 +28,4 @@ def login_view(request):
 def logout_view(request):
     """用户登出"""
     logout(request)
-    return redirect('frontend:login')
+    return redirect('login')

@@ -8,11 +8,12 @@ import uuid
 
 from .models import Order, OrderItem, PaymentConfig, Payment
 from apps.cart.models import CartItem
+from apps.inventory.services import check_cart_items_stock, InsufficientStockError
 
 
 # ==================== 前台视图 ====================
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def order_create(request):
     """创建订单"""
@@ -20,7 +21,7 @@ def order_create(request):
     
     if not item_ids:
         messages.error(request, '请选择要结算的商品')
-        return redirect('frontend:cart_list')
+        return redirect('cart_list')
     
     cart_items = CartItem.objects.filter(
         id__in=item_ids,
@@ -29,14 +30,14 @@ def order_create(request):
     
     if not cart_items.exists():
         messages.error(request, '未找到选中的商品')
-        return redirect('frontend:cart_list')
+        return redirect('cart_list')
     
     # 检查库存
-    for item in cart_items:
-        stock = getattr(item.product, 'stock', None)
-        if not stock or stock.available_quantity < item.quantity:
-            messages.error(request, f'商品 {item.product.name} 库存不足')
-            return redirect('frontend:cart_list')
+    try:
+        check_cart_items_stock(cart_items)
+    except InsufficientStockError as e:
+        messages.error(request, str(e))
+        return redirect('cart_list')
     
     with transaction.atomic():
         # 计算金额
@@ -65,10 +66,10 @@ def order_create(request):
         # 删除购物车项
         cart_items.delete()
     
-    return redirect('frontend:order_payment', pk=order.pk)
+    return redirect('order_payment', pk=order.pk)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def order_list(request):
     """订单列表"""
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
@@ -85,7 +86,7 @@ def order_list(request):
     return render(request, 'frontend/orders/list.html', context)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def order_detail(request, pk):
     """订单详情"""
     order = get_object_or_404(
@@ -105,7 +106,7 @@ def order_detail(request, pk):
     return render(request, 'frontend/orders/detail.html', context)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 def order_payment(request, pk):
     """支付页面"""
     order = get_object_or_404(Order, pk=pk, user=request.user, status='pending')
@@ -124,7 +125,7 @@ def order_payment(request, pk):
     return render(request, 'frontend/orders/payment.html', context)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def order_confirm_payment(request, pk):
     """确认支付完成"""
@@ -150,10 +151,10 @@ def order_confirm_payment(request, pk):
         )
     
     messages.success(request, '支付成功！')
-    return redirect('frontend:order_detail', pk=order.pk)
+    return redirect('order_detail', pk=order.pk)
 
 
-@login_required(login_url='frontend:login')
+@login_required(login_url='login')
 @require_POST
 def order_cancel(request, pk):
     """取消订单"""
@@ -165,4 +166,4 @@ def order_cancel(request, pk):
         order.save()
     
     messages.success(request, '订单已取消')
-    return redirect('frontend:order_list')
+    return redirect('order_list')

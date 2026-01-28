@@ -7,7 +7,7 @@
     <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">购物车</h1>
     
     {% if items %}
-    <form method="post" action="{% url 'frontend:order_create' %}" id="checkout-form">
+    <form method="post" action="{% url 'order_create' %}" id="checkout-form">
         {% csrf_token %}
         
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
@@ -29,7 +29,7 @@
                         class="item-checkbox w-6 h-6 md:w-7 md:h-7 text-primary-500 border-gray-300 rounded focus:ring-primary-500">
                     
                     <!-- 商品图片 -->
-                    <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" class="flex-shrink-0">
+                    <a href="{% url 'product_detail' pk=item.product.pk %}" class="flex-shrink-0">
                         <div class="w-16 h-16 md:w-24 md:h-24 rounded-xl overflow-hidden bg-gray-100">
                             {% if item.product.image %}
                             <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
@@ -45,7 +45,7 @@
                     
                     <!-- 商品信息 -->
                     <div class="flex-1 min-w-0">
-                        <a href="{% url 'frontend:product_detail' pk=item.product.pk %}" 
+                        <a href="{% url 'product_detail' pk=item.product.pk %}" 
                             class="font-medium text-gray-800 hover:text-primary-600 transition-colors line-clamp-2 text-sm md:text-base">
                             {{ item.product.name }}
                         </a>
@@ -113,7 +113,7 @@
         </div>
         <h3 class="text-lg font-medium text-gray-800 mb-2">购物车是空的</h3>
         <p class="text-gray-500 mb-6">快去挑选心仪的商品吧</p>
-        <a href="{% url 'frontend:product_list' %}" 
+        <a href="{% url 'product_list' %}" 
             class="inline-flex items-center px-6 py-3 bg-primary-500 text-white font-medium rounded-xl hover:bg-primary-600 transition-colors">
             去购物
         </a>
@@ -182,7 +182,7 @@ function setQuantity(itemId) {
     const input = document.getElementById('qty-' + itemId);
     const quantity = parseInt(input.value);
     
-    fetch('{% url "frontend:cart_update" %}', {
+    fetch('{% url "cart_update" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -211,7 +211,7 @@ function setQuantity(itemId) {
 function removeItem(itemId) {
     if (!confirm('确定要删除这件商品吗？')) return;
     
-    fetch('{% url "frontend:cart_remove" %}', {
+    fetch('{% url "cart_remove" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
