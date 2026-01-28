@@ -219,7 +219,7 @@ SIMPLEUI_CONFIG = {
             'name': '购物车',
             'icon': 'fas fa-cart-plus',
             'models': [
-                {'name': '购物车列表', 'icon': 'fas fa-cart-arrow-down', 'url': 'cart/cartitem/'},
+                {'name': '购物车列表', 'icon': 'fas fa-cart-arrow-down', 'url': 'cart/cart/'},
             ]
         },
     ]

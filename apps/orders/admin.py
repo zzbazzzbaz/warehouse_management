@@ -5,20 +5,33 @@ from .models import Order, OrderItem, PaymentConfig
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    extra = 0
-    readonly_fields = ['product', 'quantity', 'unit_price', 'cost_price', 'subtotal_display', 'profit_display']
-    can_delete = False
+    extra = 1
+    can_delete = True
+    
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # 编辑时只读
+            return ['product', 'quantity', 'unit_price', 'cost_price', 'subtotal_display', 'profit_display']
+        return []  # 新增时可编辑
+    
+    def get_fields(self, request, obj=None):
+        if obj:  # 编辑时显示所有字段
+            return ['product', 'quantity', 'unit_price', 'cost_price', 'subtotal_display', 'profit_display']
+        return ['product', 'quantity', 'unit_price', 'cost_price']  # 新增时
     
     def subtotal_display(self, obj):
-        return f'{obj.subtotal:.2f}'
+        if obj.pk:
+            return f'{obj.subtotal:.2f}'
+        return '-'
     subtotal_display.short_description = '小计'
     
     def profit_display(self, obj):
-        return f'{obj.profit:.2f}'
+        if obj.pk:
+            return f'{obj.profit:.2f}'
+        return '-'
     profit_display.short_description = '利润'
     
     def has_add_permission(self, request, obj=None):
-        return False
+        return obj is None  # 只在新增订单时允许添加商品
 
 
 @admin.register(Order)
@@ -29,22 +42,38 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['order_no', 'user__username', 'user__phone']
     ordering = ['-created_at']
     list_per_page = 20
-    readonly_fields = ['order_no', 'user', 'total_amount', 'total_cost', 'profit_display',
-                       'shipping_address', 'remark', 'paid_at', 'created_at', 'updated_at']
     inlines = [OrderItemInline]
-    actions = ['mark_as_paid', 'mark_as_shipped', 'mark_as_completed', 'mark_as_cancelled']
+    actions = ['mark_as_paid', 'mark_as_completed', 'mark_as_cancelled']
     
-    fieldsets = (
-        ('订单信息', {
-            'fields': ('order_no', 'user', 'status', 'payment_method')
-        }),
-        ('金额信息', {
-            'fields': ('total_amount', 'total_cost', 'profit_display')
-        }),
-        ('其他信息', {
-            'fields': ('shipping_address', 'remark', 'paid_at', 'created_at', 'updated_at')
-        }),
-    )
+    def get_readonly_fields(self, request, obj=None):
+        if obj:  # 编辑时
+            return ['order_no', 'user', 'total_amount', 'total_cost', 'profit_display',
+                    'remark', 'paid_at', 'created_at', 'updated_at']
+        return ['order_no', 'user', 'total_amount', 'total_cost', 'profit_display',
+                'paid_at', 'created_at', 'updated_at']  # 新增时备注可编辑
+    
+    def get_fieldsets(self, request, obj=None):
+        if obj:  # 编辑时
+            return (
+                ('订单信息', {
+                    'fields': ('order_no', 'user', 'status', 'payment_method')
+                }),
+                ('金额信息', {
+                    'fields': ('total_amount', 'total_cost', 'profit_display')
+                }),
+                ('其他信息', {
+                    'fields': ('remark', 'paid_at', 'created_at', 'updated_at')
+                }),
+            )
+        # 新增时
+        return (
+            ('订单信息', {
+                'fields': ('status', 'payment_method')
+            }),
+            ('其他信息', {
+                'fields': ('remark',)
+            }),
+        )
     
     def profit_display(self, obj):
         profit = obj.profit
@@ -60,17 +89,49 @@ class OrderAdmin(admin.ModelAdmin):
         from django.utils import timezone
         queryset.filter(status='pending').update(status='paid', paid_at=timezone.now())
     
-    @admin.action(description='标记为已发货')
-    def mark_as_shipped(self, request, queryset):
-        queryset.filter(status='paid').update(status='shipped')
-    
     @admin.action(description='标记为已完成')
     def mark_as_completed(self, request, queryset):
-        queryset.filter(status='shipped').update(status='completed')
+        queryset.filter(status='paid').update(status='completed')
     
     @admin.action(description='标记为已取消')
     def mark_as_cancelled(self, request, queryset):
         queryset.filter(status__in=['pending', 'paid']).update(status='cancelled')
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # 新增时
+            obj.user = request.user
+            # 生成订单号
+            import uuid
+            from django.utils import timezone
+            obj.order_no = f"ORD{timezone.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:6].upper()}"
+            obj.total_amount = 0
+            obj.total_cost = 0
+        super().save_model(request, obj, form, change)
+    
+    def save_related(self, request, form, formsets, change):
+        # 新增时，处理订单明细的默认值
+        if not change:
+            for formset in formsets:
+                for item_form in formset.forms:
+                    if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
+                        product = item_form.cleaned_data.get('product')
+                        if product:
+                            # 单价缺省时使用商品售价
+                            if not item_form.cleaned_data.get('unit_price'):
+                                item_form.instance.unit_price = product.selling_price
+                            # 成本价缺省时使用商品成本价
+                            if not item_form.cleaned_data.get('cost_price'):
+                                item_form.instance.cost_price = product.cost_price
+        
+        super().save_related(request, form, formsets, change)
+        
+        if not change:  # 新增时计算总金额
+            obj = form.instance
+            total_amount = sum(item.subtotal for item in obj.items.all())
+            total_cost = sum(item.cost_price * item.quantity for item in obj.items.all())
+            obj.total_amount = total_amount
+            obj.total_cost = total_cost
+            obj.save(update_fields=['total_amount', 'total_cost'])
 
 
 @admin.register(PaymentConfig)

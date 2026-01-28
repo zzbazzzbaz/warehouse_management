@@ -7,7 +7,6 @@ class Order(models.Model):
     ORDER_STATUS = [
         ('pending', '待支付'),
         ('paid', '已支付'),
-        ('shipped', '已发货'),
         ('completed', '已完成'),
         ('cancelled', '已取消'),
     ]
@@ -50,6 +49,8 @@ class Order(models.Model):
 
     @property
     def profit(self):
+        if self.total_amount is None or self.total_cost is None:
+            return 0
         return self.total_amount - self.total_cost
 
 
@@ -64,8 +65,8 @@ class OrderItem(models.Model):
         related_name='order_items', verbose_name='商品'
     )
     quantity = models.IntegerField('数量')
-    unit_price = models.DecimalField('单价', max_digits=10, decimal_places=2)
-    cost_price = models.DecimalField('成本价', max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField('单价', max_digits=10, decimal_places=2, null=True, blank=True)
+    cost_price = models.DecimalField('成本价', max_digits=10, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = 'order_items'
