@@ -4,52 +4,6 @@ from .models import Supplier, StockIn
 
 
 # 自定义筛选器
-class QuantityRangeFilter(admin.SimpleListFilter):
-    title = '入库数量'
-    parameter_name = 'quantity_range'
-    
-    def lookups(self, request, model_admin):
-        return (
-            ('1-10', '1-10件'),
-            ('11-50', '11-50件'),
-            ('51-100', '51-100件'),
-            ('100+', '100件以上'),
-        )
-    
-    def queryset(self, request, queryset):
-        if self.value() == '1-10':
-            return queryset.filter(quantity__lte=10)
-        elif self.value() == '11-50':
-            return queryset.filter(quantity__gt=10, quantity__lte=50)
-        elif self.value() == '51-100':
-            return queryset.filter(quantity__gt=50, quantity__lte=100)
-        elif self.value() == '100+':
-            return queryset.filter(quantity__gt=100)
-
-
-class UnitCostRangeFilter(admin.SimpleListFilter):
-    title = '入库单价'
-    parameter_name = 'unit_cost_range'
-    
-    def lookups(self, request, model_admin):
-        return (
-            ('0-10', '10元以下'),
-            ('10-50', '10-50元'),
-            ('50-100', '50-100元'),
-            ('100+', '100元以上'),
-        )
-    
-    def queryset(self, request, queryset):
-        if self.value() == '0-10':
-            return queryset.filter(unit_cost__lt=10)
-        elif self.value() == '10-50':
-            return queryset.filter(unit_cost__gte=10, unit_cost__lt=50)
-        elif self.value() == '50-100':
-            return queryset.filter(unit_cost__gte=50, unit_cost__lt=100)
-        elif self.value() == '100+':
-            return queryset.filter(unit_cost__gte=100)
-
-
 class ProductCategoryFilter(admin.SimpleListFilter):
     title = '商品分类'
     parameter_name = 'product_category'
@@ -127,13 +81,12 @@ class SupplierAdmin(admin.ModelAdmin):
 class StockInAdmin(admin.ModelAdmin):
     list_display = ['stock_in_no', 'product', 'product_category', 'quantity', 'unit_cost', 'total_cost',
                     'supplier', 'operator', 'created_at']
-    list_filter = [ProductCategoryFilter, 'supplier', QuantityRangeFilter, UnitCostRangeFilter, HasSupplierFilter, 'created_at']
+    list_filter = [ProductCategoryFilter, 'supplier', HasSupplierFilter, 'created_at']
     search_fields = ['stock_in_no', 'product__name', 'supplier__name', 'remark']
     ordering = ['-created_at']
     list_per_page = 20
     autocomplete_fields = ['product', 'supplier']
     readonly_fields = ['stock_in_no', 'operator', 'created_at']
-    date_hierarchy = 'created_at'
     
     def product_category(self, obj):
         if obj.product.category:

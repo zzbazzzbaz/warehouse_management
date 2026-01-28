@@ -2,78 +2,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import render
-from django.db.models import Count
 from .models import Category, Product
 
 
 # 自定义筛选器
-class SellingPriceRangeFilter(admin.SimpleListFilter):
-    title = '售价区间'
-    parameter_name = 'selling_price_range'
-    
-    def lookups(self, request, model_admin):
-        return (
-            ('0-50', '50元以下'),
-            ('50-100', '50-100元'),
-            ('100-500', '100-500元'),
-            ('500+', '500元以上'),
-        )
-    
-    def queryset(self, request, queryset):
-        if self.value() == '0-50':
-            return queryset.filter(selling_price__lt=50)
-        elif self.value() == '50-100':
-            return queryset.filter(selling_price__gte=50, selling_price__lt=100)
-        elif self.value() == '100-500':
-            return queryset.filter(selling_price__gte=100, selling_price__lt=500)
-        elif self.value() == '500+':
-            return queryset.filter(selling_price__gte=500)
-
-
-class CostPriceRangeFilter(admin.SimpleListFilter):
-    title = '成本价区间'
-    parameter_name = 'cost_price_range'
-    
-    def lookups(self, request, model_admin):
-        return (
-            ('0-20', '20元以下'),
-            ('20-50', '20-50元'),
-            ('50-100', '50-100元'),
-            ('100+', '100元以上'),
-        )
-    
-    def queryset(self, request, queryset):
-        if self.value() == '0-20':
-            return queryset.filter(cost_price__lt=20)
-        elif self.value() == '20-50':
-            return queryset.filter(cost_price__gte=20, cost_price__lt=50)
-        elif self.value() == '50-100':
-            return queryset.filter(cost_price__gte=50, cost_price__lt=100)
-        elif self.value() == '100+':
-            return queryset.filter(cost_price__gte=100)
-
-
-class ProfitRateFilter(admin.SimpleListFilter):
-    title = '利润率'
-    parameter_name = 'profit_rate'
-    
-    def lookups(self, request, model_admin):
-        return (
-            ('low', '低利润(<20%)'),
-            ('medium', '中等利润(20%-50%)'),
-            ('high', '高利润(>50%)'),
-        )
-    
-    def queryset(self, request, queryset):
-        from django.db.models import F
-        if self.value() == 'low':
-            return queryset.filter(selling_price__lt=F('cost_price') * 1.2)
-        elif self.value() == 'medium':
-            return queryset.filter(selling_price__gte=F('cost_price') * 1.2, selling_price__lt=F('cost_price') * 1.5)
-        elif self.value() == 'high':
-            return queryset.filter(selling_price__gte=F('cost_price') * 1.5)
-
-
 class HasImageFilter(admin.SimpleListFilter):
     title = '是否有图片'
     parameter_name = 'has_image'
@@ -162,13 +94,12 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'cost_price', 'selling_price', 'profit_display', 'is_active', 'image_preview', 'created_at']
-    list_filter = ['category', 'is_active', SellingPriceRangeFilter, CostPriceRangeFilter, ProfitRateFilter, HasImageFilter, 'created_at']
+    list_filter = ['category', 'is_active', HasImageFilter, 'created_at']
     search_fields = ['name', 'description', 'category__name']
     list_editable = ['is_active']
     ordering = ['-created_at']
     list_per_page = 20
     readonly_fields = ['image_preview_large', 'created_at', 'updated_at']
-    date_hierarchy = 'created_at'
     
     def profit_display(self, obj):
         profit = obj.selling_price - obj.cost_price
