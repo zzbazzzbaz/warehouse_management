@@ -6,27 +6,8 @@ from .models import Order, Payment
 from apps.products.models import ProductStock
 
 
-@receiver(post_save, sender=Order)
-def handle_order_stock(sender, instance, created, **kwargs):
-    """
-    订单创建时冻结库存
-    """
-    if created and instance.status == 'pending':
-        with transaction.atomic():
-            # 冻结订单中所有商品的库存
-            for item in instance.items.all():
-                stock, _ = ProductStock.objects.select_for_update().get_or_create(
-                    product=item.product
-                )
-                # 检查库存是否足够
-                if stock.available_quantity < item.quantity:
-                    raise ValidationError(
-                        f'商品 {item.product.name} 库存不足，可用库存：{stock.available_quantity}，需要：{item.quantity}'
-                    )
-                # 冻结库存
-                stock.available_quantity -= item.quantity
-                stock.frozen_quantity += item.quantity
-                stock.save()
+# 注意：订单创建时的库存冻结已移至 views.py 中的 order_create 函数
+# 因为 post_save 信号触发时 OrderItem 还未保存，instance.items.all() 为空
 
 
 @receiver(pre_save, sender=Order)

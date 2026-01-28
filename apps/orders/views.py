@@ -8,6 +8,7 @@ import uuid
 
 from .models import Order, OrderItem, PaymentConfig, Payment
 from apps.cart.models import CartItem
+from apps.products.models import ProductStock
 from apps.inventory.services import check_cart_items_stock, InsufficientStockError
 
 
@@ -53,7 +54,7 @@ def order_create(request):
             status='pending'
         )
         
-        # 创建订单项（库存由 signal 统一处理）
+        # 创建订单项并冻结库存
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -62,6 +63,12 @@ def order_create(request):
                 unit_price=item.product.selling_price,
                 cost_price=item.product.cost_price
             )
+            
+            # 冻结库存（从可用库存转移到冻结库存）
+            stock = ProductStock.objects.select_for_update().get(product=item.product)
+            stock.available_quantity -= item.quantity
+            stock.frozen_quantity += item.quantity
+            stock.save()
         
         # 删除购物车项
         cart_items.delete()
