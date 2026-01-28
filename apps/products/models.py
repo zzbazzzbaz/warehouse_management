@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 class Category(models.Model):
@@ -44,7 +45,7 @@ class Product(models.Model):
     cost_price = models.DecimalField('成本价', max_digits=10, decimal_places=2)
     selling_price = models.DecimalField('售价', max_digits=10, decimal_places=2)
     image = models.ImageField('商品图片', upload_to='products/', blank=True)
-    description = models.TextField('商品描述', blank=True)
+    description = RichTextUploadingField('商品描述', blank=True)
     is_active = models.BooleanField('是否上架', default=True)
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)

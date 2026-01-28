@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
+    'ckeditor',
+    'ckeditor_uploader',
     
     # 项目应用
     'apps.users',
@@ -223,4 +225,25 @@ SIMPLEUI_CONFIG = {
             ]
         },
     ]
+}
+
+
+# CKEditor 配置
+CKEDITOR_UPLOAD_PATH = 'uploads/'
+CKEDITOR_IMAGE_BACKEND = 'pillow'
+CKEDITOR_CONFIGS = {
+    'default': {
+        'height': 300,
+        'width': '100%',
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+            ['Link', 'Unlink'],
+            ['Image', 'Table'],
+            ['RemoveFormat', 'Source'],
+        ],
+        'removePlugins': 'elementspath',
+        'resize_enabled': False,
+    },
 }
