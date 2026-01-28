@@ -61,3 +61,27 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProductStock(models.Model):
+    """商品库存"""
+    product = models.OneToOneField(
+        Product, on_delete=models.CASCADE,
+        related_name='stock', verbose_name='商品'
+    )
+    available_quantity = models.IntegerField('可用库存', default=0, help_text='可以销售的库存数量')
+    frozen_quantity = models.IntegerField('冻结库存', default=0, help_text='订单占用的库存数量')
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        db_table = 'product_stocks'
+        verbose_name = '商品库存'
+        verbose_name_plural = '商品库存'
+
+    def __str__(self):
+        return f'{self.product.name} - 可用:{self.available_quantity} 冻结:{self.frozen_quantity}'
+
+    @property
+    def total_quantity(self):
+        """总库存 = 可用库存 + 冻结库存"""
+        return self.available_quantity + self.frozen_quantity

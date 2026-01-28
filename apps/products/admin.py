@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import render
-from .models import Category, Product
+from .models import Category, Product, ProductStock
 
 
 # 自定义筛选器
@@ -131,3 +131,29 @@ class ProductAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="200" style="max-height: 200px; object-fit: contain;"/>', obj.image.url)
         return '暂无图片'
     image_preview_large.short_description = '图片预览'
+
+
+@admin.register(ProductStock)
+class ProductStockAdmin(admin.ModelAdmin):
+    list_display = ['product', 'available_quantity', 'frozen_quantity', 'total_quantity_display', 'updated_at']
+    list_filter = ['updated_at']
+    search_fields = ['product__name']
+    ordering = ['-updated_at']
+    list_per_page = 20
+    readonly_fields = ['product', 'updated_at']
+    
+    def total_quantity_display(self, obj):
+        return obj.total_quantity
+    total_quantity_display.short_description = '总库存'
+    
+    def has_add_permission(self, request):
+        # 不允许手动添加，通过入库自动创建
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        # 不允许修改库存记录
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # 不允许删除库存记录
+        return False

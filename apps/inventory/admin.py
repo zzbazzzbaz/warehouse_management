@@ -123,3 +123,11 @@ class StockInAdmin(admin.ModelAdmin):
             if obj.unit_cost is None:
                 obj.unit_cost = obj.product.cost_price
         super().save_model(request, obj, form, change)
+    
+    def has_change_permission(self, request, obj=None):
+        # 不允许修改入库记录
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # 不允许删除入库记录
+        return False

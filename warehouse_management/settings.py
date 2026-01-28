@@ -199,6 +199,7 @@ SIMPLEUI_CONFIG = {
                 {'name': '分类树结构', 'icon': 'fas fa-sitemap', 'url': 'products/category/tree/'},
                 {'name': '商品分类', 'icon': 'fas fa-folder', 'url': 'products/category/'},
                 {'name': '商品列表', 'icon': 'fas fa-cubes', 'url': 'products/product/'},
+                {'name': '商品库存', 'icon': 'fas fa-boxes', 'url': 'products/productstock/'},
             ]
         },
         {
@@ -214,6 +215,7 @@ SIMPLEUI_CONFIG = {
             'icon': 'fas fa-shopping-cart',
             'models': [
                 {'name': '订单列表', 'icon': 'fas fa-file-invoice', 'url': 'orders/order/'},
+                {'name': '支付记录', 'icon': 'fas fa-money-bill-wave', 'url': 'orders/payment/'},
                 {'name': '支付配置', 'icon': 'fas fa-credit-card', 'url': 'orders/paymentconfig/'},
             ]
         },

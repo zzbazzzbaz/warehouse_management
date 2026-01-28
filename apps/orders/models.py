@@ -101,3 +101,42 @@ class PaymentConfig(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Payment(models.Model):
+    """支付记录（手工输入）"""
+    PAYMENT_STATUS = [
+        ('pending', '待确认'),
+        ('success', '支付成功'),
+        ('failed', '支付失败'),
+    ]
+
+    payment_no = models.CharField('支付单号', max_length=50, unique=True)
+    order = models.ForeignKey(
+        Order, on_delete=models.PROTECT,
+        related_name='payments', verbose_name='订单'
+    )
+    amount = models.DecimalField('支付金额', max_digits=10, decimal_places=2)
+    payment_method = models.CharField('支付方式', max_length=100, help_text='例如：微信、支付宝、现金等')
+    status = models.CharField('支付状态', max_length=20, choices=PAYMENT_STATUS, default='pending')
+    trade_no = models.CharField('交易流水号', max_length=100, blank=True, help_text='第三方支付平台的交易号')
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name='payment_records', verbose_name='操作人'
+    )
+    remark = models.TextField('备注', blank=True)
+    paid_at = models.DateTimeField('支付时间', null=True, blank=True)
+    created_at = models.DateTimeField('创建时间', auto_now_add=True)
+
+    class Meta:
+        db_table = 'payments'
+        verbose_name = '支付记录'
+        verbose_name_plural = '支付记录'
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['order']),
+            models.Index(fields=['status']),
+        ]
+
+    def __str__(self):
+        return f'{self.payment_no} - {self.order.order_no}'

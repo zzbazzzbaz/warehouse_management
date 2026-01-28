@@ -37,3 +37,15 @@ class CartAdmin(admin.ModelAdmin):
     def total_amount_display(self, obj):
         return format_html('<b>{}</b>', f'{obj.total_amount:.2f}')
     total_amount_display.short_description = '总金额'
+    
+    def has_add_permission(self, request):
+        # 不允许添加购物车
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        # 不允许修改购物车
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # 不允许删除购物车
+        return False
