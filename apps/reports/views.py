@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Sum, Count, F
-from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.utils import timezone
 from datetime import timedelta
 
@@ -19,7 +19,9 @@ def get_date_range(period='day', days=30):
     elif period == 'week':
         start_date = end_date - timedelta(weeks=days)
     elif period == 'month':
-        start_date = end_date - timedelta(days=days * 30)
+        start_date = end_date - timedelta(days=days)
+    elif period == 'year':
+        start_date = end_date - timedelta(days=days)
     else:
         start_date = end_date - timedelta(days=30)
     return start_date, end_date
@@ -31,6 +33,8 @@ def get_trunc_func(period):
         return TruncWeek
     elif period == 'month':
         return TruncMonth
+    elif period == 'year':
+        return TruncYear
     return TruncDate
 
 
@@ -83,7 +87,7 @@ def sales_trend_api(request):
     sales = []
     counts = []
 
-    date_format = '%Y-%m' if period == 'month' else '%Y-%m-%d'
+    date_format = '%Y' if period == 'year' else ('%Y-%m' if period == 'month' else '%Y-%m-%d')
     for item in orders:
         dates.append(item['date'].strftime(date_format) if item['date'] else '')
         sales.append(float(item['total_sales'] or 0))
@@ -189,7 +193,7 @@ def profit_trend_api(request):
     sales = []
     costs = []
 
-    date_format = '%Y-%m' if period == 'month' else '%Y-%m-%d'
+    date_format = '%Y' if period == 'year' else ('%Y-%m' if period == 'month' else '%Y-%m-%d')
     for item in orders:
         dates.append(item['date'].strftime(date_format) if item['date'] else '')
         total_sales = float(item['total_sales'] or 0)
@@ -345,7 +349,7 @@ def stock_in_trend_api(request):
     costs = []
     counts = []
 
-    date_format = '%Y-%m' if period == 'month' else '%Y-%m-%d'
+    date_format = '%Y' if period == 'year' else ('%Y-%m' if period == 'month' else '%Y-%m-%d')
     for item in stock_ins:
         dates.append(item['date'].strftime(date_format) if item['date'] else '')
         quantities.append(item['total_quantity'] or 0)

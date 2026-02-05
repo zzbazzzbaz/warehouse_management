@@ -35,6 +35,7 @@
     <div class="chart-tabs">
         <button class="chart-tab active" data-chart="profit" data-period="day">按日</button>
         <button class="chart-tab" data-chart="profit" data-period="month">按月</button>
+        <button class="chart-tab" data-chart="profit" data-period="year">按年</button>
     </div>
     <div id="profitTrendChart" class="chart-box"></div>
 </div>
@@ -45,32 +46,21 @@
     <div class="chart-tabs">
         <button class="chart-tab active" data-chart="cost" data-period="day">按日</button>
         <button class="chart-tab" data-chart="cost" data-period="month">按月</button>
+        <button class="chart-tab" data-chart="cost" data-period="year">按年</button>
     </div>
     <div id="salesCostChart" class="chart-box"></div>
-</div>
-
-<!-- 毛利率趋势 -->
-<div class="chart-container">
-    <h3>毛利率趋势</h3>
-    <div class="chart-tabs">
-        <button class="chart-tab active" data-chart="rate" data-period="day">按日</button>
-        <button class="chart-tab" data-chart="rate" data-period="month">按月</button>
-    </div>
-    <div id="profitRateChart" class="chart-box"></div>
 </div>
 {% endblock %}
 
 {% block report_js %}
 <script>
-let profitTrendChart, salesCostChart, profitRateChart;
+let profitTrendChart, salesCostChart;
 let currentProfitPeriod = 'day';
 let currentCostPeriod = 'day';
-let currentRatePeriod = 'day';
 
 document.addEventListener('DOMContentLoaded', function() {
     profitTrendChart = echarts.init(document.getElementById('profitTrendChart'));
     salesCostChart = echarts.init(document.getElementById('salesCostChart'));
-    profitRateChart = echarts.init(document.getElementById('profitRateChart'));
     
     // Tab点击事件
     document.querySelectorAll('.chart-tab').forEach(tab => {
@@ -82,7 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (chart === 'profit') { currentProfitPeriod = period; loadProfitChart(); }
             else if (chart === 'cost') { currentCostPeriod = period; loadCostChart(); }
-            else if (chart === 'rate') { currentRatePeriod = period; loadRateChart(); }
         });
     });
     
@@ -90,7 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', function() {
         profitTrendChart.resize();
         salesCostChart.resize();
-        profitRateChart.resize();
     });
 });
 
@@ -98,7 +86,6 @@ window.loadAllData = function() {
     loadSummary();
     loadProfitChart();
     loadCostChart();
-    loadRateChart();
 }
 
 function loadSummary() {
@@ -117,7 +104,7 @@ function loadSummary() {
 }
 
 function loadProfitChart() {
-    const days = currentProfitPeriod === 'month' ? 365 : 30;
+    const days = currentProfitPeriod === 'year' ? 1825 : (currentProfitPeriod === 'month' ? 365 : 30);
     fetch(`/admin/reports/api/profit-trend/?period=${currentProfitPeriod}&days=${days}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {
@@ -136,7 +123,7 @@ function loadProfitChart() {
 }
 
 function loadCostChart() {
-    const days = currentCostPeriod === 'month' ? 365 : 30;
+    const days = currentCostPeriod === 'year' ? 1825 : (currentCostPeriod === 'month' ? 365 : 30);
     fetch(`/admin/reports/api/profit-trend/?period=${currentCostPeriod}&days=${days}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {
@@ -148,28 +135,8 @@ function loadCostChart() {
                 yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
                 series: [
                     { name: '销售额', type: 'bar', itemStyle: { color: '#667eea', borderRadius: [4,4,0,0] }, data: data.sales },
-                    { name: '成本', type: 'bar', itemStyle: { color: '#f5576c', borderRadius: [4,4,0,0] }, data: data.costs }
+            { name: '成本', type: 'bar', itemStyle: { color: '#f5576c', borderRadius: [4,4,0,0] }, data: data.costs }
                 ]
-            }, true);
-        });
-}
-
-function loadRateChart() {
-    const days = currentRatePeriod === 'month' ? 365 : 30;
-    fetch(`/admin/reports/api/profit-trend/?period=${currentRatePeriod}&days=${days}`, {credentials: 'same-origin'})
-        .then(response => response.json())
-        .then(data => {
-            profitRateChart.setOption({
-                tooltip: { trigger: 'axis', formatter: params => params[0].axisValue + '<br/>' + params[0].marker + '毛利率: ' + params[0].value + '%' },
-                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-                xAxis: { type: 'category', boundaryGap: false, data: data.dates },
-                yAxis: { type: 'value', axisLabel: { formatter: '{value}%' }, max: 100 },
-                series: [{
-                    name: '毛利率', type: 'line', smooth: true,
-                    lineStyle: { color: '#f093fb', width: 3 }, itemStyle: { color: '#f093fb' },
-                    markLine: { silent: true, data: [{ yAxis: 30, label: { formatter: '30%基准线' }, lineStyle: { color: '#ff6b6b', type: 'dashed' } }] },
-                    data: data.profit_rates
-                }]
             }, true);
         });
 }

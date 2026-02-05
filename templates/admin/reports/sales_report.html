@@ -11,6 +11,7 @@
     <div class="chart-tabs">
         <button class="chart-tab active" data-chart="sales" data-period="day">按日</button>
         <button class="chart-tab" data-chart="sales" data-period="month">按月</button>
+        <button class="chart-tab" data-chart="sales" data-period="year">按年</button>
     </div>
     <div id="salesTrendChart" class="chart-box"></div>
 </div>
@@ -21,6 +22,7 @@
     <div class="chart-tabs">
         <button class="chart-tab active" data-chart="order" data-period="day">按日</button>
         <button class="chart-tab" data-chart="order" data-period="month">按月</button>
+        <button class="chart-tab" data-chart="order" data-period="year">按年</button>
     </div>
     <div id="orderCountChart" class="chart-box"></div>
 </div>
@@ -109,7 +111,7 @@ window.loadAllData = function() {
 }
 
 function loadSalesChart() {
-    const days = currentSalesPeriod === 'month' ? 365 : 30;
+    const days = currentSalesPeriod === 'year' ? 1825 : (currentSalesPeriod === 'month' ? 365 : 30);
     fetch(`/admin/reports/api/sales-trend/?period=${currentSalesPeriod}&days=${days}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {
@@ -145,7 +147,7 @@ function loadSalesChart() {
 }
 
 function loadOrderChart() {
-    const days = currentOrderPeriod === 'month' ? 365 : 30;
+    const days = currentOrderPeriod === 'year' ? 1825 : (currentOrderPeriod === 'month' ? 365 : 30);
     fetch(`/admin/reports/api/sales-trend/?period=${currentOrderPeriod}&days=${days}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {

@@ -23,25 +23,11 @@
     <div class="chart-tabs">
         <button class="chart-tab active" data-chart="stockin" data-period="day">按日</button>
         <button class="chart-tab" data-chart="stockin" data-period="month">按月</button>
+        <button class="chart-tab" data-chart="stockin" data-period="year">按年</button>
     </div>
     <div id="stockInTrendChart" class="chart-box"></div>
 </div>
 
-<!-- 低库存预警 -->
-<div class="chart-container">
-    <h3>低库存预警 (库存≤10)</h3>
-    <div id="lowStockTable">
-        <div class="loading">加载中...</div>
-    </div>
-</div>
-
-<!-- 库存明细表 -->
-<div class="chart-container">
-    <h3>库存明细</h3>
-    <div id="stockTable">
-        <div class="loading">加载中...</div>
-    </div>
-</div>
 {% endblock %}
 
 {% block report_js %}
@@ -84,7 +70,6 @@ window.loadAllData = function() {
     loadStockStatus();
     loadSupplierStats();
     loadStockInTrend();
-    loadLowStock();
 }
 
 function loadStockStatus() {
@@ -130,50 +115,6 @@ function loadStockStatus() {
                     }))
                 }]
             });
-            
-            // 库存明细表
-            let tableHtml = `
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>商品名称</th>
-                            <th>分类</th>
-                            <th>可用库存</th>
-                            <th>冻结库存</th>
-                            <th>总库存</th>
-                            <th>成本价</th>
-                            <th>售价</th>
-                            <th>库存价值</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            data.stocks.forEach(item => {
-                const stockValue = (item.total * item.cost_price).toFixed(2);
-                let statusBadge = '';
-                if (item.available <= 0) {
-                    statusBadge = '<span class="badge badge-danger">缺货</span>';
-                } else if (item.available <= 10) {
-                    statusBadge = '<span class="badge badge-warning">低库存</span>';
-                }
-                
-                tableHtml += `
-                    <tr>
-                        <td>${item.product_name} ${statusBadge}</td>
-                        <td>${item.category}</td>
-                        <td>${item.available}</td>
-                        <td>${item.frozen}</td>
-                        <td>${item.total}</td>
-                        <td>¥${item.cost_price.toFixed(2)}</td>
-                        <td>¥${item.selling_price.toFixed(2)}</td>
-                        <td>¥${parseFloat(stockValue).toLocaleString()}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHtml += '</tbody></table>';
-            document.getElementById('stockTable').innerHTML = tableHtml;
         });
 }
 
@@ -230,7 +171,7 @@ function loadSupplierStats() {
 
 function loadStockInTrend() {
     const period = currentStockInPeriod;
-    const days = period === 'day' ? 30 : 365;
+    const days = period === 'year' ? 1825 : (period === 'month' ? 365 : 30);
     
     fetch(`/admin/reports/api/stock-in-trend/?period=${period}&days=${days}`, {credentials: 'same-origin'})
         .then(response => response.json())
@@ -305,55 +246,6 @@ function loadStockInTrend() {
                     }
                 ]
             });
-        });
-}
-
-function loadLowStock() {
-    fetch('/admin/reports/api/low-stock/?threshold=10', {credentials: 'same-origin'})
-        .then(response => response.json())
-        .then(data => {
-            if (data.data.length === 0) {
-                document.getElementById('lowStockTable').innerHTML = '<p style="padding: 20px; color: #28a745; text-align: center;">✅ 暂无低库存商品</p>';
-                return;
-            }
-            
-            let tableHtml = `
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>商品名称</th>
-                            <th>可用库存</th>
-                            <th>冻结库存</th>
-                            <th>总库存</th>
-                            <th>状态</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            data.data.forEach(item => {
-                let statusBadge = '';
-                if (item.available <= 0) {
-                    statusBadge = '<span class="badge badge-danger">缺货</span>';
-                } else if (item.available <= 5) {
-                    statusBadge = '<span class="badge badge-danger">严重不足</span>';
-                } else {
-                    statusBadge = '<span class="badge badge-warning">库存偏低</span>';
-                }
-                
-                tableHtml += `
-                    <tr>
-                        <td>${item.product_name}</td>
-                        <td>${item.available}</td>
-                        <td>${item.frozen}</td>
-                        <td>${item.total}</td>
-                        <td>${statusBadge}</td>
-                    </tr>
-                `;
-            });
-            
-            tableHtml += '</tbody></table>';
-            document.getElementById('lowStockTable').innerHTML = tableHtml;
         });
 }
 </script>
