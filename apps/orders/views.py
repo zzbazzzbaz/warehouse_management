@@ -19,9 +19,15 @@ from apps.inventory.services import check_cart_items_stock, InsufficientStockErr
 def order_create(request):
     """创建订单"""
     item_ids = request.POST.getlist('item_ids')
+    customer_name = request.POST.get('customer_name', '').strip()
+    customer_remark = request.POST.get('customer_remark', '').strip()
     
     if not item_ids:
         messages.error(request, '请选择要结算的商品')
+        return redirect('cart_list')
+    
+    if not customer_name:
+        messages.error(request, '请输入客户名称')
         return redirect('cart_list')
     
     cart_items = CartItem.objects.filter(
@@ -51,6 +57,8 @@ def order_create(request):
             user=request.user,
             total_amount=total_amount,
             total_cost=total_cost,
+            customer_name=customer_name,
+            customer_remark=customer_remark,
             status='pending'
         )
         

@@ -186,9 +186,15 @@ ADMIN_INDEX_TITLE = '欢迎使用仓库管理系统'
 # SimpleUI 菜单配置
 SIMPLEUI_CONFIG = {
     'system_keep': False,
-    'menu_display': ['用户管理', '商品管理', '库存管理', '订单管理', '购物车'],
+    'menu_display': ['前台商城', '用户管理', '商品管理', '库存管理', '订单管理', '购物车'],
     'dynamic': True,
     'menus': [
+        {
+            'name': '前台商城',
+            'icon': 'fas fa-store',
+            'url': '/',
+            'newTab': True,
+        },
         {
             'name': '用户管理',
             'icon': 'fas fa-users',

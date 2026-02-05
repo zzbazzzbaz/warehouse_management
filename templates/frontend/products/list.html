@@ -2,12 +2,244 @@
 
 {% block title %}商品列表{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* 树形分类样式 */
+    .category-tree {
+        --tree-line-color: #e5e7eb;
+    }
+    .category-node {
+        position: relative;
+    }
+    .category-node::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 50%;
+        width: 16px;
+        height: 2px;
+        background: var(--tree-line-color);
+    }
+    .category-children {
+        position: relative;
+        margin-left: 24px;
+        padding-left: 20px;
+    }
+    .category-children::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 12px;
+        width: 2px;
+        background: var(--tree-line-color);
+    }
+    .category-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid transparent;
+        white-space: nowrap;
+    }
+    .category-chip:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .category-chip.active {
+        background: linear-gradient(135deg, #ec7711 0%, #f09432 100%);
+        color: white;
+        border-color: #dd5c07;
+        box-shadow: 0 4px 14px rgba(236,119,17,0.35);
+    }
+    .category-chip.parent-chip {
+        background: linear-gradient(135deg, #fef7ee 0%, #fdedd3 100%);
+        color: #b74309;
+        border-color: #f9d7a5;
+    }
+    .category-chip.parent-chip:hover {
+        background: linear-gradient(135deg, #fdedd3 0%, #f9d7a5 100%);
+    }
+    .category-chip.parent-chip.active {
+        background: linear-gradient(135deg, #ec7711 0%, #f09432 100%);
+        color: white;
+        border-color: #dd5c07;
+    }
+    .category-chip.child-chip {
+        background: #f9fafb;
+        color: #4b5563;
+        border-color: #e5e7eb;
+        font-size: 0.9em;
+    }
+    .category-chip.child-chip:hover {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+    }
+    .category-chip.child-chip.active {
+        background: linear-gradient(135deg, #f09432 0%, #f5ba6d 100%);
+        color: white;
+        border-color: #ec7711;
+    }
+    .expand-icon {
+        transition: transform 0.3s ease;
+    }
+    .category-group.expanded .expand-icon {
+        transform: rotate(90deg);
+    }
+    .category-group .category-children {
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.2s ease, margin 0.3s ease;
+        margin-top: 0;
+    }
+    .category-group.expanded .category-children {
+        max-height: 500px;
+        opacity: 1;
+        margin-top: 12px;
+    }
+    /* 浮窗遮罩层 */
+    .filter-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    .filter-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    /* 浮窗内容 */
+    .filter-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: white;
+        border-radius: 20px;
+        z-index: 101;
+        width: 90%;
+        max-width: 500px;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .filter-modal.active {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+    /* 筛选按钮 */
+    .filter-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #fef7ee 0%, #fdedd3 100%);
+        border: 2px solid #f9d7a5;
+        border-radius: 14px;
+        color: #b74309;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+    .filter-trigger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(236,119,17,0.2);
+    }
+    .filter-trigger.has-filter {
+        background: linear-gradient(135deg, #ec7711 0%, #f09432 100%);
+        border-color: #dd5c07;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- 筛选浮窗遮罩层 -->
+<div class="filter-overlay" id="filterOverlay" onclick="closeFilterModal()"></div>
+
+<!-- 筛选浮窗 -->
+<div class="filter-modal" id="filterModal">
+    <div class="p-4 md:p-6 category-tree">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-1 h-6 bg-gradient-to-b from-primary-400 to-primary-600 rounded-full"></div>
+                <h3 class="text-lg font-semibold text-gray-800">商品分类</h3>
+            </div>
+            <button onclick="closeFilterModal()" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 pb-4">
+            <!-- 全部分类 -->
+            <div class="category-chip {% if not current_category %}active{% else %}parent-chip{% endif %}" 
+                onclick="selectCategory('')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                全部
+            </div>
+            
+            {% for category in categories %}
+            <!-- 父分类组 -->
+            <div class="category-group" data-category-id="{{ category.id }}">
+                <div class="flex items-center gap-2">
+                    <div class="category-chip parent-chip {% if current_category == category.id|stringformat:'s' %}active{% endif %}"
+                        onclick="selectCategory('{{ category.id }}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        {{ category.name }}
+                    </div>
+                    {% if category.children.all %}
+                    <button type="button" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" 
+                        onclick="toggleCategory(this.closest('.category-group'))">
+                        <svg class="w-4 h-4 text-gray-400 expand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div>
+                
+                {% if category.children.all %}
+                <!-- 子分类 -->
+                <div class="category-children">
+                    <div class="flex flex-wrap gap-2">
+                        {% for child in category.children.all %}
+                        <div class="category-chip child-chip category-node {% if current_category == child.id|stringformat:'s' %}active{% endif %}"
+                            onclick="selectCategory('{{ child.id }}')">
+                            {{ child.name }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-    <!-- 搜索和筛选 -->
-    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6 md:mb-8">
-        <form method="get" class="flex flex-col md:flex-row gap-4">
-            <!-- 搜索框 -->
+    <!-- 搜索框和筛选按钮 -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 mb-6">
+        <form method="get" id="searchForm" class="flex gap-3">
+            <input type="hidden" name="category" id="categoryInput" value="{{ current_category|default:'' }}">
             <div class="flex-1 relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 md:w-6 md:h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,28 +251,46 @@
                     placeholder="搜索商品...">
             </div>
             
-            <!-- 分类筛选 -->
-            <div class="w-full md:w-72">
-                <select name="category" onchange="this.form.submit()"
-                    class="w-full px-4 py-3 md:py-4 text-base md:text-lg border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none bg-white">
-                    <option value="">全部分类</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if current_category == category.id|stringformat:"s" %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                    {% for child in category.children.all %}
-                    <option value="{{ child.id }}" {% if current_category == child.id|stringformat:"s" %}selected{% endif %}>
-                        &nbsp;&nbsp;└ {{ child.name }}
-                    </option>
-                    {% endfor %}
-                    {% endfor %}
-                </select>
-            </div>
+            <!-- 筛选按钮 -->
+            <button type="button" onclick="openFilterModal()" 
+                class="filter-trigger {% if current_category %}has-filter{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+                <span class="hidden sm:inline">筛选</span>
+            </button>
             
-            <button type="submit" class="px-6 md:px-8 py-3 md:py-4 bg-primary-500 text-white font-medium text-base md:text-lg rounded-xl hover:bg-primary-600 transition-colors">
-                搜索
+            <button type="submit" class="px-6 md:px-8 py-3 md:py-4 bg-primary-500 text-white font-medium text-base md:text-lg rounded-xl hover:bg-primary-600 transition-colors shadow-sm hover:shadow-md">
+                <span class="hidden sm:inline">搜索</span>
+                <svg class="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
             </button>
         </form>
+        
+        <!-- 当前筛选标签 -->
+        {% if current_category %}
+        <div class="mt-3 flex items-center gap-2">
+            <span class="text-sm text-gray-500">当前筛选:</span>
+            <span class="inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
+                {% for category in categories %}
+                    {% if current_category == category.id|stringformat:'s' %}
+                        {{ category.name }}
+                    {% endif %}
+                    {% for child in category.children.all %}
+                        {% if current_category == child.id|stringformat:'s' %}
+                            {{ child.name }}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                <button onclick="selectCategory('')" class="ml-1 hover:text-primary-900">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        {% endif %}
     </div>
     
     <!-- 商品网格 -->
@@ -60,7 +310,6 @@
                     </svg>
                 </div>
                 {% endif %}
-                
             </a>
             
             <!-- 商品信息 -->
@@ -108,6 +357,46 @@
 
 {% block extra_js %}
 <script>
+// 打开筛选浮窗
+function openFilterModal() {
+    document.getElementById('filterOverlay').classList.add('active');
+    document.getElementById('filterModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// 关闭筛选浮窗
+function closeFilterModal() {
+    document.getElementById('filterOverlay').classList.remove('active');
+    document.getElementById('filterModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// 分类选择
+function selectCategory(categoryId) {
+    document.getElementById('categoryInput').value = categoryId;
+    document.getElementById('searchForm').submit();
+}
+
+// 展开/折叠分类
+function toggleCategory(groupEl) {
+    groupEl.classList.toggle('expanded');
+}
+
+// 页面加载时，自动展开当前选中子分类的父分类
+function initCategoryTree() {
+    const currentCategory = '{{ current_category|default:"" }}';
+    if (currentCategory) {
+        document.querySelectorAll('.category-chip.child-chip.active').forEach(chip => {
+            const group = chip.closest('.category-group');
+            if (group) {
+                group.classList.add('expanded');
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initCategoryTree);
+
 function addToCart(productId) {
     fetch('{% url "cart_add" %}', {
         method: 'POST',

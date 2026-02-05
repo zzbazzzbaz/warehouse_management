@@ -28,8 +28,8 @@ class Order(models.Model):
         '支付方式', max_length=20, choices=PAYMENT_METHODS,
         null=True, blank=True
     )
-    shipping_address = models.TextField('收货地址', blank=True)
-    remark = models.TextField('备注', blank=True)
+    customer_name = models.CharField('客户名称', max_length=100)
+    customer_remark = models.TextField('客户备注', blank=True)
     paid_at = models.DateTimeField('支付时间', null=True, blank=True)
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)

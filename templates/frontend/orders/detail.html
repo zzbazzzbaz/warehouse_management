@@ -91,6 +91,23 @@
         </div>
     </div>
     
+    <!-- 客户信息 -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <h2 class="font-semibold text-gray-800 mb-4">客户信息</h2>
+        <dl class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <dt class="text-gray-500">客户名称</dt>
+                <dd class="text-gray-800 font-medium">{{ order.customer_name }}</dd>
+            </div>
+            {% if order.customer_remark %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">客户备注</dt>
+                <dd class="text-gray-800">{{ order.customer_remark }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+    
     <!-- 订单信息 -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
         <h2 class="font-semibold text-gray-800 mb-4">订单信息</h2>

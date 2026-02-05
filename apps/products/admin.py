@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import render
@@ -93,13 +94,34 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'cost_price', 'selling_price', 'is_active', 'image_preview', 'created_at']
+    list_display = ['name', 'category', 'cost_price', 'selling_price', 'is_active', 'stock_display', 'image_preview', 'created_at']
     list_filter = ['category', 'is_active', HasImageFilter, 'created_at']
     search_fields = ['name', 'description', 'category__name']
     list_editable = ['is_active']
     ordering = ['-created_at']
     list_per_page = 20
     readonly_fields = ['image_preview_large', 'created_at', 'updated_at']
+    
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['show_stock_tip'] = True
+        return super().changelist_view(request, extra_context)
+    
+    def stock_display(self, obj):
+        if hasattr(obj, 'stock'):
+            qty = obj.stock.available_quantity
+            if qty > 0:
+                return format_html('<span style="color: green;">{}</span>', qty)
+            return format_html('<span style="color: red;">0</span>')
+        return format_html('<span style="color: gray;">无库存记录</span>')
+    stock_display.short_description = '可用库存'
+    
+    def get_readonly_fields(self, request, obj=None):
+        """编辑时，成本价、售价、商品名称、分类不可修改"""
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj:  # 编辑现有记录
+            readonly.extend(['name', 'category', 'cost_price', 'selling_price'])
+        return readonly
     
     def profit_display(self, obj):
         profit = obj.selling_price - obj.cost_price

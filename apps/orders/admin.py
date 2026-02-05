@@ -48,9 +48,9 @@ class OrderAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         if obj:  # 编辑时
             return ['order_no', 'user', 'total_amount', 'total_cost', 'profit_display',
-                    'remark', 'paid_at', 'created_at', 'updated_at']
+                    'customer_name', 'customer_remark', 'paid_at', 'created_at', 'updated_at']
         return ['order_no', 'user', 'total_amount', 'total_cost', 'profit_display',
-                'paid_at', 'created_at', 'updated_at']  # 新增时备注可编辑
+                'paid_at', 'created_at', 'updated_at']
     
     def get_fieldsets(self, request, obj=None):
         if obj:  # 编辑时
@@ -58,11 +58,14 @@ class OrderAdmin(admin.ModelAdmin):
                 ('订单信息', {
                     'fields': ('order_no', 'user', 'status', 'payment_method')
                 }),
+                ('客户信息', {
+                    'fields': ('customer_name', 'customer_remark')
+                }),
                 ('金额信息', {
                     'fields': ('total_amount', 'total_cost', 'profit_display')
                 }),
                 ('其他信息', {
-                    'fields': ('remark', 'paid_at', 'created_at', 'updated_at')
+                    'fields': ('paid_at', 'created_at', 'updated_at')
                 }),
             )
         # 新增时
@@ -70,8 +73,8 @@ class OrderAdmin(admin.ModelAdmin):
             ('订单信息', {
                 'fields': ('status', 'payment_method')
             }),
-            ('其他信息', {
-                'fields': ('remark',)
+            ('客户信息', {
+                'fields': ('customer_name', 'customer_remark')
             }),
         )
     
