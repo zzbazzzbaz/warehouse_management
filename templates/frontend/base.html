@@ -65,9 +65,15 @@
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
-                <!-- Logo -->
-                <a href="{% url 'product_list' %}" class="flex items-center">
-                </a>
+                <!-- 全屏按钮 -->
+                <button id="fullscreen-btn" onclick="toggleFullscreen()" class="p-2 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors" title="全屏">
+                    <svg id="fullscreen-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                    </svg>
+                    <svg id="exit-fullscreen-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4H4m0 0l5 5M9 15v5H4m0 0l5-5m11 5h-5v5m0 0l5-5m-5-11h5V4m0 0l-5 5"/>
+                    </svg>
+                </button>
                 
                 <!-- 导航链接 -->
                 <nav class="flex items-center space-x-6 md:space-x-8">
@@ -178,6 +184,28 @@
                 badge.classList.toggle('hidden', count === 0);
             }
         }
+        
+        // 全屏切换
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // 监听全屏状态变化
+        document.addEventListener('fullscreenchange', function() {
+            const enterIcon = document.getElementById('fullscreen-icon');
+            const exitIcon = document.getElementById('exit-fullscreen-icon');
+            if (document.fullscreenElement) {
+                enterIcon.classList.add('hidden');
+                exitIcon.classList.remove('hidden');
+            } else {
+                enterIcon.classList.remove('hidden');
+                exitIcon.classList.add('hidden');
+            }
+        });
     </script>
     
     {% block extra_js %}{% endblock %}
