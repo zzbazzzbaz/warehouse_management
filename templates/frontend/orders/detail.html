@@ -19,7 +19,6 @@
             <div>
                 <h1 class="text-xl font-bold text-gray-800 mb-2">
                     {% if order.status == 'pending' %}待支付
-                    {% elif order.status == 'paid' %}已支付
                     {% elif order.status == 'completed' %}已完成
                     {% else %}已取消{% endif %}
                 </h1>
@@ -27,20 +26,15 @@
             </div>
             <div class="w-16 h-16 rounded-full flex items-center justify-center
                 {% if order.status == 'pending' %}bg-yellow-100
-                {% elif order.status == 'paid' %}bg-green-100
-                {% elif order.status == 'completed' %}bg-blue-100
+                {% elif order.status == 'completed' %}bg-green-100
                 {% else %}bg-gray-100{% endif %}">
                 {% if order.status == 'pending' %}
                 <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                {% elif order.status == 'paid' %}
+                {% elif order.status == 'completed' %}
                 <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {% elif order.status == 'completed' %}
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 {% else %}
                 <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

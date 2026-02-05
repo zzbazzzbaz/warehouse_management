@@ -29,10 +29,22 @@
 <div class="chart-row">
     <div class="chart-container">
         <h3>订单状态分布</h3>
+        <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="status" data-range="today">本日</button>
+            <button class="chart-tab" data-chart="status" data-range="month">本月</button>
+            <button class="chart-tab" data-chart="status" data-range="year">本年</button>
+            <button class="chart-tab" data-chart="status" data-range="all">总体</button>
+        </div>
         <div id="statusChart" class="chart-box"></div>
     </div>
     <div class="chart-container">
         <h3>支付方式分布</h3>
+        <div class="chart-tabs">
+            <button class="chart-tab active" data-chart="payment" data-range="today">本日</button>
+            <button class="chart-tab" data-chart="payment" data-range="month">本月</button>
+            <button class="chart-tab" data-chart="payment" data-range="year">本年</button>
+            <button class="chart-tab" data-chart="payment" data-range="all">总体</button>
+        </div>
         <div id="paymentChart" class="chart-box"></div>
     </div>
 </div>
@@ -43,6 +55,8 @@
 let salesTrendChart, orderCountChart, statusChart, paymentChart;
 let currentSalesPeriod = 'day';
 let currentOrderPeriod = 'day';
+let currentStatusRange = 'today';
+let currentPaymentRange = 'today';
 
 document.addEventListener('DOMContentLoaded', function() {
     salesTrendChart = echarts.init(document.getElementById('salesTrendChart'));
@@ -55,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tab.addEventListener('click', function() {
             const chart = this.dataset.chart;
             const period = this.dataset.period;
+            const range = this.dataset.range;
             
             // 更新当前容器内的tab状态
             this.parentElement.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
@@ -66,6 +81,12 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (chart === 'order') {
                 currentOrderPeriod = period;
                 loadOrderChart();
+            } else if (chart === 'status') {
+                currentStatusRange = range;
+                loadOrderStatus();
+            } else if (chart === 'payment') {
+                currentPaymentRange = range;
+                loadPaymentMethod();
             }
         });
     });
@@ -150,7 +171,7 @@ function loadOrderChart() {
 }
 
 function loadOrderStatus() {
-    fetch('/admin/reports/api/order-status/', {credentials: 'same-origin'})
+    fetch(`/admin/reports/api/order-status/?range=${currentStatusRange}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {
             statusChart.setOption({
@@ -189,7 +210,7 @@ function loadOrderStatus() {
 }
 
 function loadPaymentMethod() {
-    fetch('/admin/reports/api/payment-method/', {credentials: 'same-origin'})
+    fetch(`/admin/reports/api/payment-method/?range=${currentPaymentRange}`, {credentials: 'same-origin'})
         .then(response => response.json())
         .then(data => {
             paymentChart.setOption({

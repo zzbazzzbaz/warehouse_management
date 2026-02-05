@@ -1,6 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+{% endblock %}
+
 {% block extrastyle %}
 {{ block.super }}
 <style>
@@ -157,6 +162,5 @@
     {% block report_content %}{% endblock %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 {% block report_js %}{% endblock %}
 {% endblock %}

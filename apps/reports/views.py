@@ -71,7 +71,7 @@ def sales_trend_api(request):
     orders = Order.objects.filter(
         created_at__gte=start_date,
         created_at__lte=end_date,
-        status__in=['paid', 'completed']
+        status='completed'
     ).annotate(
         date=trunc_func('created_at')
     ).values('date').annotate(
@@ -99,9 +99,21 @@ def sales_trend_api(request):
 @staff_member_required
 def order_status_api(request):
     """订单状态分布数据API"""
+    range_type = request.GET.get('range', 'today')  # today, month, year, all
+    
     status_map = dict(Order.ORDER_STATUS)
+    queryset = Order.objects.all()
+    
+    today = timezone.now().date()
+    if range_type == 'today':
+        queryset = queryset.filter(created_at__date=today)
+    elif range_type == 'month':
+        queryset = queryset.filter(created_at__date__gte=today.replace(day=1))
+    elif range_type == 'year':
+        queryset = queryset.filter(created_at__date__gte=today.replace(month=1, day=1))
+    # 'all' 不需要过滤
 
-    status_data = Order.objects.values('status').annotate(
+    status_data = queryset.values('status').annotate(
         count=Count('id')
     ).order_by('status')
 
@@ -118,12 +130,24 @@ def order_status_api(request):
 @staff_member_required
 def payment_method_api(request):
     """支付方式分布数据API"""
+    range_type = request.GET.get('range', 'today')  # today, month, year, all
+    
     method_map = dict(Order.PAYMENT_METHODS)
-
-    method_data = Order.objects.filter(
-        status__in=['paid', 'completed'],
+    queryset = Order.objects.filter(
+        status='completed',
         payment_method__isnull=False
-    ).values('payment_method').annotate(
+    )
+    
+    today = timezone.now().date()
+    if range_type == 'today':
+        queryset = queryset.filter(created_at__date=today)
+    elif range_type == 'month':
+        queryset = queryset.filter(created_at__date__gte=today.replace(day=1))
+    elif range_type == 'year':
+        queryset = queryset.filter(created_at__date__gte=today.replace(month=1, day=1))
+    # 'all' 不需要过滤
+
+    method_data = queryset.values('payment_method').annotate(
         count=Count('id'),
         total=Sum('total_amount')
     ).order_by('payment_method')
@@ -151,7 +175,7 @@ def profit_trend_api(request):
     orders = Order.objects.filter(
         created_at__gte=start_date,
         created_at__lte=end_date,
-        status__in=['paid', 'completed']
+        status='completed'
     ).annotate(
         date=trunc_func('created_at')
     ).values('date').annotate(
@@ -196,7 +220,7 @@ def profit_summary_api(request):
     """利润汇总数据API"""
     # 总体统计
     total_stats = Order.objects.filter(
-        status__in=['paid', 'completed']
+        status='completed'
     ).aggregate(
         total_sales=Sum('total_amount'),
         total_cost=Sum('total_cost'),
@@ -212,7 +236,7 @@ def profit_summary_api(request):
     today = timezone.now().date()
     today_stats = Order.objects.filter(
         created_at__date=today,
-        status__in=['paid', 'completed']
+        status='completed'
     ).aggregate(
         sales=Sum('total_amount'),
         cost=Sum('total_cost'),
@@ -227,7 +251,7 @@ def profit_summary_api(request):
     month_start = today.replace(day=1)
     month_stats = Order.objects.filter(
         created_at__date__gte=month_start,
-        status__in=['paid', 'completed']
+        status='completed'
     ).aggregate(
         sales=Sum('total_amount'),
         cost=Sum('total_cost'),

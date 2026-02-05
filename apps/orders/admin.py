@@ -87,18 +87,14 @@ class OrderAdmin(admin.ModelAdmin):
         return '0.00'
     profit_display.short_description = '利润'
     
-    @admin.action(description='标记为已支付')
-    def mark_as_paid(self, request, queryset):
-        from django.utils import timezone
-        queryset.filter(status='pending').update(status='paid', paid_at=timezone.now())
-    
     @admin.action(description='标记为已完成')
     def mark_as_completed(self, request, queryset):
-        queryset.filter(status='paid').update(status='completed')
+        from django.utils import timezone
+        queryset.filter(status='pending').update(status='completed', paid_at=timezone.now())
     
     @admin.action(description='标记为已取消')
     def mark_as_cancelled(self, request, queryset):
-        queryset.filter(status__in=['pending', 'paid']).update(status='cancelled')
+        queryset.filter(status='pending').update(status='cancelled')
     
     def has_add_permission(self, request):
         # 不允许添加订单

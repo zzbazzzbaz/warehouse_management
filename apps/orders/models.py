@@ -6,7 +6,6 @@ class Order(models.Model):
     """订单"""
     ORDER_STATUS = [
         ('pending', '待支付'),
-        ('paid', '已支付'),
         ('completed', '已完成'),
         ('cancelled', '已取消'),
     ]

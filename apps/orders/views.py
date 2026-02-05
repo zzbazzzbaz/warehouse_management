@@ -149,7 +149,7 @@ def order_confirm_payment(request, pk):
     
     with transaction.atomic():
         # 更新订单状态（库存由 signal 统一处理）
-        order.status = 'paid'
+        order.status = 'completed'
         order.payment_method = payment_method
         order.paid_at = timezone.now()
         order.save()

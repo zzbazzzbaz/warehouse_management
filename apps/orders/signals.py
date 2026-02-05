@@ -33,8 +33,8 @@ def handle_order_status_change(sender, instance, **kwargs):
                         stock.available_quantity += item.quantity
                         stock.save()
             
-            # 订单支付成功，扣减库存
-            elif old_order.status == 'pending' and instance.status == 'paid':
+            # 订单完成，扣减库存
+            elif old_order.status == 'pending' and instance.status == 'completed':
                 with transaction.atomic():
                     for item in instance.items.all():
                         stock = ProductStock.objects.select_for_update().get(
@@ -55,6 +55,6 @@ def handle_payment_success(sender, instance, created, **kwargs):
     if instance.status == 'success':
         order = instance.order
         if order.status == 'pending':
-            order.status = 'paid'
+            order.status = 'completed'
             order.paid_at = instance.paid_at
             order.save()
