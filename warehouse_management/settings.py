@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-qfxwxu2b@-_y4p19fl%rb^d49+%p_hz$sq)ij4xhkzr!ofcxd6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://8003.frp.chatgqt.top',
+    'https://*.frp.chatgqt.top',
+]
 
 
 # Application definition
