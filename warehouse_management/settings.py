@@ -150,6 +150,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # WhiteNoise配置 - 生产环境静态文件服务
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
