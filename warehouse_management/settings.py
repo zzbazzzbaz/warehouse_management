@@ -197,7 +197,7 @@ SIMPLEUI_ANALYSIS = False  # 关闭使用分析
 SIMPLEUI_STATIC_OFFLINE = True  # 离线模式，不使用CDN
 
 # Logo配置
-SIMPLEUI_LOGO = '/static/img/logo.png'  # 自定义Logo（需要放置logo文件）
+# SIMPLEUI_LOGO = '/static/img/logo.png'  # 自定义Logo（需要放置logo文件）
 
 # 主题配置
 SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'  # 默认主题
