@@ -112,8 +112,8 @@ class ProductAdmin(admin.ModelAdmin):
             qty = obj.stock.available_quantity
             if qty > 0:
                 return format_html('<span style="color: green;">{}</span>', qty)
-            return format_html('<span style="color: red;">0</span>')
-        return format_html('<span style="color: gray;">无库存记录</span>')
+            return format_html('<span style="color: red;">{}</span>', 0)
+        return format_html('<span style="color: gray;">{}</span>', '无库存记录')
     stock_display.short_description = '可用库存'
     
     def get_readonly_fields(self, request, obj=None):
@@ -153,6 +153,9 @@ class ProductAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" width="200" style="max-height: 200px; object-fit: contain;"/>', obj.image.url)
         return '暂无图片'
     image_preview_large.short_description = '图片预览'
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(ProductStock)

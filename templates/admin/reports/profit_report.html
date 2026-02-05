@@ -1,0 +1,177 @@
+{% extends "admin/reports/base_report.html" %}
+
+{% block report_content %}
+<div class="report-header">
+    <h1>利润分析报表</h1>
+</div>
+
+<!-- 统计卡片 -->
+<div class="stat-cards" id="summaryCards">
+    <div class="stat-card">
+        <div class="title">累计销售额</div>
+        <div class="value" id="totalSales">-</div>
+        <div class="sub-value" id="totalOrders">-</div>
+    </div>
+    <div class="stat-card green">
+        <div class="title">累计利润</div>
+        <div class="value" id="totalProfit">-</div>
+        <div class="sub-value" id="profitRate">-</div>
+    </div>
+    <div class="stat-card orange">
+        <div class="title">今日销售额</div>
+        <div class="value" id="todaySales">-</div>
+        <div class="sub-value" id="todayProfit">-</div>
+    </div>
+    <div class="stat-card blue">
+        <div class="title">本月销售额</div>
+        <div class="value" id="monthSales">-</div>
+        <div class="sub-value" id="monthProfit">-</div>
+    </div>
+</div>
+
+<!-- 利润趋势图 -->
+<div class="chart-container">
+    <h3>利润趋势</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="profit" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="profit" data-period="month">按月</button>
+    </div>
+    <div id="profitTrendChart" class="chart-box"></div>
+</div>
+
+<!-- 销售额与成本对比 -->
+<div class="chart-container">
+    <h3>销售额与成本对比</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="cost" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="cost" data-period="month">按月</button>
+    </div>
+    <div id="salesCostChart" class="chart-box"></div>
+</div>
+
+<!-- 毛利率趋势 -->
+<div class="chart-container">
+    <h3>毛利率趋势</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="rate" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="rate" data-period="month">按月</button>
+    </div>
+    <div id="profitRateChart" class="chart-box"></div>
+</div>
+{% endblock %}
+
+{% block report_js %}
+<script>
+let profitTrendChart, salesCostChart, profitRateChart;
+let currentProfitPeriod = 'day';
+let currentCostPeriod = 'day';
+let currentRatePeriod = 'day';
+
+document.addEventListener('DOMContentLoaded', function() {
+    profitTrendChart = echarts.init(document.getElementById('profitTrendChart'));
+    salesCostChart = echarts.init(document.getElementById('salesCostChart'));
+    profitRateChart = echarts.init(document.getElementById('profitRateChart'));
+    
+    // Tab点击事件
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const chart = this.dataset.chart;
+            const period = this.dataset.period;
+            this.parentElement.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            if (chart === 'profit') { currentProfitPeriod = period; loadProfitChart(); }
+            else if (chart === 'cost') { currentCostPeriod = period; loadCostChart(); }
+            else if (chart === 'rate') { currentRatePeriod = period; loadRateChart(); }
+        });
+    });
+    
+    loadAllData();
+    window.addEventListener('resize', function() {
+        profitTrendChart.resize();
+        salesCostChart.resize();
+        profitRateChart.resize();
+    });
+});
+
+window.loadAllData = function() {
+    loadSummary();
+    loadProfitChart();
+    loadCostChart();
+    loadRateChart();
+}
+
+function loadSummary() {
+    fetch('/admin/reports/api/profit-summary/', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalSales').textContent = '¥' + data.total.sales.toLocaleString();
+            document.getElementById('totalOrders').textContent = '共 ' + data.total.order_count + ' 笔订单';
+            document.getElementById('totalProfit').textContent = '¥' + data.total.profit.toLocaleString();
+            document.getElementById('profitRate').textContent = '毛利率: ' + data.total.profit_rate + '%';
+            document.getElementById('todaySales').textContent = '¥' + data.today.sales.toLocaleString();
+            document.getElementById('todayProfit').textContent = '利润: ¥' + data.today.profit.toLocaleString();
+            document.getElementById('monthSales').textContent = '¥' + data.month.sales.toLocaleString();
+            document.getElementById('monthProfit').textContent = '利润: ¥' + data.month.profit.toLocaleString();
+        });
+}
+
+function loadProfitChart() {
+    const days = currentProfitPeriod === 'month' ? 365 : 30;
+    fetch(`/admin/reports/api/profit-trend/?period=${currentProfitPeriod}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            profitTrendChart.setOption({
+                tooltip: { trigger: 'axis', formatter: params => params[0].axisValue + '<br/>' + params[0].marker + '利润: ¥' + params[0].value.toLocaleString() },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: data.dates },
+                yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
+                series: [{
+                    name: '利润', type: 'line', smooth: true,
+                    areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{offset: 0, color: 'rgba(17,153,142,0.5)'}, {offset: 1, color: 'rgba(17,153,142,0.05)'}] } },
+                    lineStyle: { color: '#11998e', width: 3 }, itemStyle: { color: '#11998e' }, data: data.profits
+                }]
+            }, true);
+        });
+}
+
+function loadCostChart() {
+    const days = currentCostPeriod === 'month' ? 365 : 30;
+    fetch(`/admin/reports/api/profit-trend/?period=${currentCostPeriod}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            salesCostChart.setOption({
+                tooltip: { trigger: 'axis', formatter: params => { let r = params[0].axisValue + '<br/>'; params.forEach(p => r += p.marker + p.seriesName + ': ¥' + p.value.toLocaleString() + '<br/>'); return r; } },
+                legend: { data: ['销售额', '成本'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: data.dates },
+                yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
+                series: [
+                    { name: '销售额', type: 'bar', itemStyle: { color: '#667eea', borderRadius: [4,4,0,0] }, data: data.sales },
+                    { name: '成本', type: 'bar', itemStyle: { color: '#f5576c', borderRadius: [4,4,0,0] }, data: data.costs }
+                ]
+            }, true);
+        });
+}
+
+function loadRateChart() {
+    const days = currentRatePeriod === 'month' ? 365 : 30;
+    fetch(`/admin/reports/api/profit-trend/?period=${currentRatePeriod}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            profitRateChart.setOption({
+                tooltip: { trigger: 'axis', formatter: params => params[0].axisValue + '<br/>' + params[0].marker + '毛利率: ' + params[0].value + '%' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: data.dates },
+                yAxis: { type: 'value', axisLabel: { formatter: '{value}%' }, max: 100 },
+                series: [{
+                    name: '毛利率', type: 'line', smooth: true,
+                    lineStyle: { color: '#f093fb', width: 3 }, itemStyle: { color: '#f093fb' },
+                    markLine: { silent: true, data: [{ yAxis: 30, label: { formatter: '30%基准线' }, lineStyle: { color: '#ff6b6b', type: 'dashed' } }] },
+                    data: data.profit_rates
+                }]
+            }, true);
+        });
+}
+</script>
+{% endblock %}

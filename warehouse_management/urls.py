@@ -31,6 +31,7 @@ admin.site.site_title = '仓库管理'
 admin.site.index_title = '欢迎使用仓库管理系统'
 
 urlpatterns = [
+    path('admin/reports/', include('apps.reports.urls')),  # 必须在admin/之前
     path('admin/', admin.site.urls),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     

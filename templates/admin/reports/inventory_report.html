@@ -1,0 +1,360 @@
+{% extends "admin/reports/base_report.html" %}
+
+{% block report_content %}
+<div class="report-header">
+    <h1>库存报表</h1>
+</div>
+
+<!-- 库存分类饼图和供应商统计 -->
+<div class="chart-row">
+    <div class="chart-container">
+        <h3>库存分类分布</h3>
+        <div id="categoryChart" class="chart-box"></div>
+    </div>
+    <div class="chart-container">
+        <h3>供应商入库统计</h3>
+        <div id="supplierChart" class="chart-box"></div>
+    </div>
+</div>
+
+<!-- 入库趋势 -->
+<div class="chart-container">
+    <h3>入库趋势</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="stockin" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="stockin" data-period="month">按月</button>
+    </div>
+    <div id="stockInTrendChart" class="chart-box"></div>
+</div>
+
+<!-- 低库存预警 -->
+<div class="chart-container">
+    <h3>低库存预警 (库存≤10)</h3>
+    <div id="lowStockTable">
+        <div class="loading">加载中...</div>
+    </div>
+</div>
+
+<!-- 库存明细表 -->
+<div class="chart-container">
+    <h3>库存明细</h3>
+    <div id="stockTable">
+        <div class="loading">加载中...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block report_js %}
+<script>
+let categoryChart, supplierChart, stockInTrendChart;
+let currentStockInPeriod = 'day';
+
+document.addEventListener('DOMContentLoaded', function() {
+    categoryChart = echarts.init(document.getElementById('categoryChart'));
+    supplierChart = echarts.init(document.getElementById('supplierChart'));
+    stockInTrendChart = echarts.init(document.getElementById('stockInTrendChart'));
+    
+    // Tab切换事件
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const chart = this.dataset.chart;
+            const period = this.dataset.period;
+            
+            // 更新tab状态
+            document.querySelectorAll(`.chart-tab[data-chart="${chart}"]`).forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            if (chart === 'stockin') {
+                currentStockInPeriod = period;
+                loadStockInTrend();
+            }
+        });
+    });
+    
+    loadAllData();
+    
+    window.addEventListener('resize', function() {
+        categoryChart.resize();
+        supplierChart.resize();
+        stockInTrendChart.resize();
+    });
+});
+
+window.loadAllData = function() {
+    loadStockStatus();
+    loadSupplierStats();
+    loadStockInTrend();
+    loadLowStock();
+}
+
+function loadStockStatus() {
+    fetch('/admin/reports/api/stock-status/', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            // 分类饼图
+            categoryChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>数量: ' + params.data.total + '<br/>价值: ¥' + params.data.value.toLocaleString();
+                    }
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: true,
+                        formatter: '{b}: {c}'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 16,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    data: data.category_stats.map(item => ({
+                        name: item.name,
+                        value: item.total,
+                        total: item.total
+                    }))
+                }]
+            });
+            
+            // 库存明细表
+            let tableHtml = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>分类</th>
+                            <th>可用库存</th>
+                            <th>冻结库存</th>
+                            <th>总库存</th>
+                            <th>成本价</th>
+                            <th>售价</th>
+                            <th>库存价值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.stocks.forEach(item => {
+                const stockValue = (item.total * item.cost_price).toFixed(2);
+                let statusBadge = '';
+                if (item.available <= 0) {
+                    statusBadge = '<span class="badge badge-danger">缺货</span>';
+                } else if (item.available <= 10) {
+                    statusBadge = '<span class="badge badge-warning">低库存</span>';
+                }
+                
+                tableHtml += `
+                    <tr>
+                        <td>${item.product_name} ${statusBadge}</td>
+                        <td>${item.category}</td>
+                        <td>${item.available}</td>
+                        <td>${item.frozen}</td>
+                        <td>${item.total}</td>
+                        <td>¥${item.cost_price.toFixed(2)}</td>
+                        <td>¥${item.selling_price.toFixed(2)}</td>
+                        <td>¥${parseFloat(stockValue).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += '</tbody></table>';
+            document.getElementById('stockTable').innerHTML = tableHtml;
+        });
+}
+
+function loadSupplierStats() {
+    fetch('/admin/reports/api/supplier-stats/', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            supplierChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        const item = params[0];
+                        return item.name + '<br/>入库数量: ' + item.value + '<br/>入库成本: ¥' + data.data[item.dataIndex].cost.toLocaleString();
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.data.map(item => item.name),
+                    axisLabel: {
+                        rotate: 30
+                    }
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    type: 'bar',
+                    barWidth: '60%',
+                    itemStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                {offset: 0, color: '#4facfe'},
+                                {offset: 1, color: '#00f2fe'}
+                            ]
+                        },
+                        borderRadius: [4, 4, 0, 0]
+                    },
+                    data: data.data.map(item => item.quantity)
+                }]
+            });
+        });
+}
+
+function loadStockInTrend() {
+    const period = currentStockInPeriod;
+    const days = period === 'day' ? 30 : 365;
+    
+    fetch(`/admin/reports/api/stock-in-trend/?period=${period}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            stockInTrendChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(param => {
+                            if (param.seriesName === '入库成本') {
+                                result += param.marker + param.seriesName + ': ¥' + param.value.toLocaleString() + '<br/>';
+                            } else {
+                                result += param.marker + param.seriesName + ': ' + param.value + '<br/>';
+                            }
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['入库数量', '入库成本']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.dates
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '数量',
+                        position: 'left'
+                    },
+                    {
+                        type: 'value',
+                        name: '成本',
+                        position: 'right',
+                        axisLabel: {
+                            formatter: '¥{value}'
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '入库数量',
+                        type: 'bar',
+                        yAxisIndex: 0,
+                        itemStyle: {
+                            color: '#667eea',
+                            borderRadius: [4, 4, 0, 0]
+                        },
+                        data: data.quantities
+                    },
+                    {
+                        name: '入库成本',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        smooth: true,
+                        lineStyle: {
+                            color: '#f5576c',
+                            width: 3
+                        },
+                        itemStyle: {
+                            color: '#f5576c'
+                        },
+                        data: data.costs
+                    }
+                ]
+            });
+        });
+}
+
+function loadLowStock() {
+    fetch('/admin/reports/api/low-stock/?threshold=10', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.data.length === 0) {
+                document.getElementById('lowStockTable').innerHTML = '<p style="padding: 20px; color: #28a745; text-align: center;">✅ 暂无低库存商品</p>';
+                return;
+            }
+            
+            let tableHtml = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>可用库存</th>
+                            <th>冻结库存</th>
+                            <th>总库存</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.data.forEach(item => {
+                let statusBadge = '';
+                if (item.available <= 0) {
+                    statusBadge = '<span class="badge badge-danger">缺货</span>';
+                } else if (item.available <= 5) {
+                    statusBadge = '<span class="badge badge-danger">严重不足</span>';
+                } else {
+                    statusBadge = '<span class="badge badge-warning">库存偏低</span>';
+                }
+                
+                tableHtml += `
+                    <tr>
+                        <td>${item.product_name}</td>
+                        <td>${item.available}</td>
+                        <td>${item.frozen}</td>
+                        <td>${item.total}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += '</tbody></table>';
+            document.getElementById('lowStockTable').innerHTML = tableHtml;
+        });
+}
+</script>
+{% endblock %}

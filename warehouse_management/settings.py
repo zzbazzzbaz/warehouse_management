@@ -171,14 +171,42 @@ CORS_ALLOW_ALL_ORIGINS = True  # 开发环境使用
 # 默认主键类型
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ============================================
 # SimpleUI 配置
-SIMPLEUI_HOME_INFO = False  # 隐藏首页的服务器信息
-SIMPLEUI_ANALYSIS = False  # 关闭数据分析
-SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'  # 默认主题
-SIMPLEUI_STATIC_OFFLINE = True  # 离线模式
-SIMPLEUI_INDEX = '/admin/'  # 首页地址
+# ============================================
 
-# 管理后台配置
+# 基础配置
+SIMPLEUI_HOME_INFO = False  # 隐藏首页的服务器信息
+SIMPLEUI_ANALYSIS = False  # 关闭使用分析
+SIMPLEUI_STATIC_OFFLINE = True  # 离线模式，不使用CDN
+
+# Logo配置
+SIMPLEUI_LOGO = '/static/img/logo.png'  # 自定义Logo（需要放置logo文件）
+
+# 主题配置
+SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'  # 默认主题
+# 可选主题: admin.lte.css, ant.design.css, element-ui.css, layui.css, purple.css
+
+# 快捷操作（首页显示）
+SIMPLEUI_HOME_QUICK = True  # 显示快捷操作
+SIMPLEUI_HOME_ACTION = True  # 显示最近动作
+
+# 图标配置
+SIMPLEUI_ICON = {
+    '用户': 'fas fa-user',
+    '商品': 'fas fa-box',
+    '商品分类': 'fas fa-folder-open',
+    '商品库存': 'fas fa-cubes',
+    '订单': 'fas fa-file-invoice',
+    '订单明细': 'fas fa-list',
+    '支付配置': 'fas fa-credit-card',
+    '支付记录': 'fas fa-money-check',
+    '供应商': 'fas fa-truck',
+    '入库记录': 'fas fa-sign-in-alt',
+    '购物车': 'fas fa-shopping-cart',
+}
+
+# 管理后台标题配置
 ADMIN_SITE_HEADER = '仓库管理系统'
 ADMIN_SITE_TITLE = '仓库管理'
 ADMIN_INDEX_TITLE = '欢迎使用仓库管理系统'
@@ -186,7 +214,7 @@ ADMIN_INDEX_TITLE = '欢迎使用仓库管理系统'
 # SimpleUI 菜单配置
 SIMPLEUI_CONFIG = {
     'system_keep': False,
-    'menu_display': ['前台商城', '用户管理', '商品管理', '库存管理', '订单管理', '购物车'],
+    'menu_display': ['前台商城', '统计报表', '用户管理', '商品管理', '库存管理', '订单管理', '购物车'],
     'dynamic': True,
     'menus': [
         {
@@ -194,6 +222,15 @@ SIMPLEUI_CONFIG = {
             'icon': 'fas fa-store',
             'url': '/',
             'newTab': True,
+        },
+        {
+            'name': '统计报表',
+            'icon': 'fas fa-chart-line',
+            'models': [
+                {'name': '销售统计', 'icon': 'fas fa-chart-bar', 'url': '/admin/reports/sales/'},
+                {'name': '利润分析', 'icon': 'fas fa-money-bill-wave', 'url': '/admin/reports/profit/'},
+                {'name': '库存报表', 'icon': 'fas fa-boxes', 'url': '/admin/reports/inventory/'},
+            ]
         },
         {
             'name': '用户管理',

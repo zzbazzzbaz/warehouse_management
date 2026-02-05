@@ -1,0 +1,227 @@
+{% extends "admin/reports/base_report.html" %}
+
+{% block report_content %}
+<div class="report-header">
+    <h1>销售统计报表</h1>
+</div>
+
+<!-- 销售趋势图 -->
+<div class="chart-container">
+    <h3>销售额趋势</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="sales" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="sales" data-period="month">按月</button>
+    </div>
+    <div id="salesTrendChart" class="chart-box"></div>
+</div>
+
+<!-- 订单数量趋势图 -->
+<div class="chart-container">
+    <h3>订单数量趋势</h3>
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="order" data-period="day">按日</button>
+        <button class="chart-tab" data-chart="order" data-period="month">按月</button>
+    </div>
+    <div id="orderCountChart" class="chart-box"></div>
+</div>
+
+<!-- 饼图区域 -->
+<div class="chart-row">
+    <div class="chart-container">
+        <h3>订单状态分布</h3>
+        <div id="statusChart" class="chart-box"></div>
+    </div>
+    <div class="chart-container">
+        <h3>支付方式分布</h3>
+        <div id="paymentChart" class="chart-box"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block report_js %}
+<script>
+let salesTrendChart, orderCountChart, statusChart, paymentChart;
+let currentSalesPeriod = 'day';
+let currentOrderPeriod = 'day';
+
+document.addEventListener('DOMContentLoaded', function() {
+    salesTrendChart = echarts.init(document.getElementById('salesTrendChart'));
+    orderCountChart = echarts.init(document.getElementById('orderCountChart'));
+    statusChart = echarts.init(document.getElementById('statusChart'));
+    paymentChart = echarts.init(document.getElementById('paymentChart'));
+    
+    // Tab点击事件
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const chart = this.dataset.chart;
+            const period = this.dataset.period;
+            
+            // 更新当前容器内的tab状态
+            this.parentElement.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            if (chart === 'sales') {
+                currentSalesPeriod = period;
+                loadSalesChart();
+            } else if (chart === 'order') {
+                currentOrderPeriod = period;
+                loadOrderChart();
+            }
+        });
+    });
+    
+    loadAllData();
+    
+    window.addEventListener('resize', function() {
+        salesTrendChart.resize();
+        orderCountChart.resize();
+        statusChart.resize();
+        paymentChart.resize();
+    });
+});
+
+window.loadAllData = function() {
+    loadSalesChart();
+    loadOrderChart();
+    loadOrderStatus();
+    loadPaymentMethod();
+}
+
+function loadSalesChart() {
+    const days = currentSalesPeriod === 'month' ? 365 : 30;
+    fetch(`/admin/reports/api/sales-trend/?period=${currentSalesPeriod}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            salesTrendChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(param => {
+                            result += param.marker + param.seriesName + ': ¥' + param.value.toLocaleString() + '<br/>';
+                        });
+                        return result;
+                    }
+                },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: data.dates },
+                yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
+                series: [{
+                    name: '销售额',
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {
+                        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [{offset: 0, color: 'rgba(102, 126, 234, 0.5)'}, {offset: 1, color: 'rgba(102, 126, 234, 0.05)'}]
+                        }
+                    },
+                    lineStyle: { color: '#667eea', width: 3 },
+                    itemStyle: { color: '#667eea' },
+                    data: data.sales
+                }]
+            }, true);
+        });
+}
+
+function loadOrderChart() {
+    const days = currentOrderPeriod === 'month' ? 365 : 30;
+    fetch(`/admin/reports/api/sales-trend/?period=${currentOrderPeriod}&days=${days}`, {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            orderCountChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: data.dates },
+                yAxis: { type: 'value' },
+                series: [{
+                    name: '订单数',
+                    type: 'bar',
+                    barWidth: '60%',
+                    itemStyle: {
+                        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [{offset: 0, color: '#11998e'}, {offset: 1, color: '#38ef7d'}]
+                        },
+                        borderRadius: [4, 4, 0, 0]
+                    },
+                    data: data.counts
+                }]
+            }, true);
+        });
+}
+
+function loadOrderStatus() {
+    fetch('/admin/reports/api/order-status/', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            statusChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: true,
+                        formatter: '{b}: {c}'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 16,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    data: data.data
+                }]
+            });
+        });
+}
+
+function loadPaymentMethod() {
+    fetch('/admin/reports/api/payment-method/', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(data => {
+            paymentChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return params.name + '<br/>订单数: ' + params.data.count + '<br/>总金额: ¥' + params.data.total.toLocaleString();
+                    }
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left'
+                },
+                series: [{
+                    type: 'pie',
+                    radius: '70%',
+                    itemStyle: {
+                        borderRadius: 5
+                    },
+                    label: {
+                        show: true,
+                        formatter: '{b}: {c}'
+                    },
+                    data: data.data.map(item => ({
+                        name: item.name,
+                        value: item.count,
+                        count: item.count,
+                        total: item.total
+                    }))
+                }]
+            });
+        });
+}
+</script>
+{% endblock %}

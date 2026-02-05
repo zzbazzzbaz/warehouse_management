@@ -36,7 +36,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     """商品"""
-    name = models.CharField('商品名称', max_length=200)
+    name = models.CharField('商品名称', max_length=200, unique=True)
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL,
         null=True, related_name='products',
